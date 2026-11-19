@@ -66,6 +66,16 @@
   --measure: 640px;
   --column: calc(820px - 2 * 2rem);
   --gutter: clamp(1rem, 4vw, 2.5rem);
+
+  /* The frame. One left edge and one right edge for the whole site: the
+     logo, every page's opening title, the lists and the footer all start
+     on the same vertical line (the axis), at every width. It is the
+     wider of the page's side margin and the space left over once the
+     frame reaches its widest. --sbw is the scrollbar's width, measured by
+     the layout, so the axis is exact where scrollbars take room. */
+  --frame-max: 1280px;
+  --frame-pad: clamp(1.25rem, 5vw, 5rem);
+  --axis: max(var(--frame-pad), calc((100vw - var(--sbw, 0px) - var(--frame-max)) / 2));
   --space-xs: 0.3rem;
   --space-sm: 0.6rem;
   --space-md: 1.2rem;
@@ -81,8 +91,8 @@
 
   /* Type scale. Reading and interface sizes are fixed; headings and
      display sizes are fluid, each between a floor and a ceiling. */
-  --fs-micro: 0.6rem;       /* mono captions, axis ticks, counters */
-  --fs-label: 0.68rem;      /* mono labels, eyebrows, nav, tags */
+  --fs-micro: 0.68rem;      /* mono captions, axis ticks, counters (never below 10.5px) */
+  --fs-label: 0.75rem;      /* mono labels, eyebrows, nav, tags */
   --fs-small: 0.82rem;      /* secondary text, notes, figure captions */
   --fs-ui: 1rem;            /* buttons, inputs, list text */
   /* --fs-body: 1.16rem;       reading text (defined above) */
@@ -91,7 +101,7 @@
   --fs-h2: clamp(1.5rem, 3vw, 2.1rem);
   --fs-h1: clamp(2.2rem, 5vw, 3.6rem);
   --fs-display: clamp(3.4rem, 4.9vw, 6.4rem);
-  --fs-display-xl: clamp(3.4rem, 9vw, 8.4rem);
+  --fs-display-xl: clamp(3.6rem, 10vw, 9.6rem);  /* page masts: one size on Home, Blogs, Thoughts, Contact */
   --fs-statement: clamp(1.9rem, 1.6vw + 1.3rem, 3.2rem); /* index page headings, said as a sentence */
 
   /* Weights. Newsreader runs 200–700; Plex Mono has 400 and 500. */
@@ -102,6 +112,7 @@
   --fw-bold: 600;
 
   /* Leading. */
+  --lh-mast: 0.86;          /* the page masts: lines locked together */
   --lh-display: 0.92;       /* display titles */
   --lh-none: 1;             /* single-line labels, icons, numerals */
   --lh-tight: 1.1;          /* headings */
@@ -110,6 +121,7 @@
   --lh-body: 1.7;           /* reading text */
 
   /* Tracking. */
+  --track-mast: -0.045em;   /* the page masts */
   --track-tight: -0.03em;   /* display and large headings */
   --track-snug: -0.015em;   /* headings */
   --track-normal: 0;        /* everything set in the serif */
@@ -557,9 +569,8 @@ body > header.scrolled {
 }
 
 .site-head {
-  max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--space-5) var(--gutter);
+  padding: var(--space-5) var(--axis);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -748,7 +759,7 @@ html.dark .theme-toggle .icon-moon { display: none; }
     flex-wrap: wrap;
     justify-content: center;
     row-gap: var(--space-1);
-    padding: var(--space-2) var(--gutter) var(--space-1);
+    padding: var(--space-2) var(--axis) var(--space-1);
   }
 
   .brand {
@@ -823,9 +834,8 @@ html.dark .theme-toggle .icon-moon { display: none; }
 /* ── Main ────────────────────────────────────────────── */
 main {
   --main-pt: var(--space-lg);
-  max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--main-pt) var(--gutter) var(--space-3xl);
+  padding: var(--main-pt) var(--axis) var(--space-3xl);
   width: 100%;
   flex: 1;
 }
@@ -1317,12 +1327,38 @@ main > .blog-post {
 body > footer {
   margin-top: auto;
   border-top: 1px solid var(--color-border);
+  /* The signature is cut by the bottom of the page. */
+  overflow: hidden;
+}
+
+/* The signature: the name at the width of the whole frame, in the mast's
+   hairline, its feet cut off by the page's last edge. The one place a
+   word on the site is larger than the masts: the page ends on it. */
+.foot-sign {
+  --sign-fs: calc((100vw - var(--sbw, 0px) - 2 * var(--axis)) / 4.86);
+  margin: var(--space-xl) 0 calc(-0.2 * var(--sign-fs));
+  padding-inline: var(--axis);
+  font-family: var(--font-display);
+  font-size: var(--sign-fs);
+  font-weight: var(--fw-display);
+  line-height: var(--lh-mast);
+  letter-spacing: var(--track-mast);
+  white-space: nowrap;
+  color: var(--color-text);
+  user-select: none;
+  pointer-events: none;
+}
+
+.foot-sign em {
+  font-style: italic;
+  font-weight: var(--fw-light);
+  letter-spacing: var(--track-tight);
+  color: var(--color-accent);
 }
 
 .foot {
-  max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--space-3xl) var(--gutter) var(--space-xl);
+  padding: var(--space-3xl) var(--axis) var(--space-xl);
 }
 
 .foot-line {
@@ -1408,7 +1444,7 @@ body > footer {
 
   main {
     --main-pt: var(--space-md);
-    padding: var(--main-pt) var(--gutter) var(--space-2xl);
+    padding: var(--main-pt) var(--axis) var(--space-2xl);
   }
 }
 
@@ -1712,6 +1748,20 @@ body > footer {
 }
 
 /* ── Notebooks ───────────────────────────────────────── */
+/* Every notebook day opens with the same title: the article size, light,
+   set tight, whatever the notebook. */
+.day-page-title,
+.recon .r-title {
+  margin: var(--space-2) 0 var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-light);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
 .te-page {
   max-width: var(--max-width);
 }
@@ -1946,8 +1996,7 @@ html.theme-swap body > header {
    A page marked .free has no box: it runs the width of the screen, with
    margins that grow and shrink with it. */
 main:has(> .free) {
-  max-width: 2000px;
-  padding-inline: clamp(1rem, 5vw, 7rem);
+  padding-inline: var(--axis);
 }
 
 main > .free {
@@ -1975,16 +2024,6 @@ html,body{overflow-x:clip;}
 .first-screen > *,
 .first-screen > .mast > * { pointer-events: auto; }
 
-/* The page's name stays in the document (screen readers, search) but is
-   not shown: the drawing and the sentence say what the page is. */
-.first-screen .page-name {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
 
 /* On a phone the opening's sketch has a band of its own at the top, and
    the words begin below it. */
@@ -2007,7 +2046,7 @@ html,body{overflow-x:clip;}
     /* The whole top is the drawing's. Below it, the sentence with the
        note's button in the space to its right, then the search. */
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 1fr auto auto;
+    grid-template-rows: 1fr auto auto auto;
     column-gap: var(--space-6);
     min-height: calc(100svh - var(--head-h, 4.5rem) - var(--main-pt, 2rem));
     padding-top: var(--space-xl);
@@ -2023,9 +2062,14 @@ html,body{overflow-x:clip;}
      middle. */
 
 
+  .first-screen .page-name {
+    grid-area: 2 / 1 / 3 / 3;
+    align-self: end;
+  }
+
   .first-screen .mast > .why {
     position: relative;
-    grid-area: 2 / 2 / 3 / 3;
+    grid-area: 3 / 2 / 4 / 3;
     align-self: end;
     margin: 0;
     pointer-events: none;
@@ -2065,13 +2109,12 @@ html,body{overflow-x:clip;}
   }
 
   .first-screen .page-statement {
-    grid-area: 2 / 1 / 3 / 2;
+    grid-area: 3 / 1 / 4 / 2;
     align-self: end;
-    margin-top: 0;
   }
 
   .first-screen > .console {
-    grid-area: 3 / 1 / 4 / 3;
+    grid-area: 4 / 1 / 5 / 3;
     margin: var(--space-lg) 0 0;
   }
 
@@ -2359,19 +2402,38 @@ pre,
    is at a reading-display size, its counts in italic orange. On Blogs and
    Thoughts the search below continues the sentence at the same size.
    Pages set only their own spacing around these, never the type. */
-.page-name {
+/* The mast: one display title for every page that opens a section of the
+   site (Home's name, Blogs, Thoughts, Contact). Hairline weight at the
+   largest size on the site, set tight enough that the words lock
+   together, the last word in the italic accent. It starts on the axis and
+   is allowed to be the loudest thing on the screen; everything near it
+   is quiet. */
+.mast-title {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--fs-label);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-size: var(--fs-display-xl);
+  font-weight: var(--fw-display);
+  line-height: var(--lh-mast);
+  letter-spacing: var(--track-mast);
+  color: var(--color-text);
+  /* Optical alignment: the serif's side bearing would set the title a
+     hair right of the axis that the small text beneath sits on. */
+  margin-left: -0.04em;
+  /* Room for the italic's overhang. */
+  padding-right: 0.12em;
+  text-wrap: balance;
+}
+
+.mast-title em {
+  font-style: italic;
+  font-weight: var(--fw-light);
+  letter-spacing: var(--track-tight);
   color: var(--color-accent);
 }
 
 .page-statement {
   max-width: 21em;
-  margin: var(--space-md) 0 0;
+  margin: var(--space-lg) 0 0;
   font-family: var(--font-display);
   font-size: var(--fs-statement);
   font-weight: var(--fw-light);
@@ -2687,4 +2749,31 @@ pre,
   main > .blog-post.tech { --measure: 720px; }
   .blog-post.tech .blog-post-content p,
   .blog-post.tech .blog-post-content li { font-size: 1.22rem; }
+}
+
+/* ── The opening letter ─────────────────────────────────────────
+   Every essay begins with its first letter dropped three lines deep, in
+   the mast's hairline and the accent: the one ornament an essay gets,
+   and it marks where reading starts. Where the browser can sink a letter
+   into the lines exactly, it does; elsewhere it floats. */
+.blog-post-content > p:first-of-type::first-letter {
+  float: left;
+  margin: var(--space-1-5) var(--space-3) 0 0;
+  font-family: var(--font-display);
+  font-size: 3.7em;
+  font-weight: var(--fw-display);
+  font-style: normal;
+  line-height: var(--lh-mast);
+  color: var(--color-accent);
+}
+
+@supports (initial-letter: 3) or (-webkit-initial-letter: 3) {
+  .blog-post-content > p:first-of-type::first-letter {
+    float: none;
+    font-size: inherit;
+    line-height: inherit;
+    -webkit-initial-letter: 3;
+    initial-letter: 3;
+    margin: 0 var(--space-3) 0 0;
+  }
 }

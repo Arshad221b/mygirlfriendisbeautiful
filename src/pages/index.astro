@@ -182,7 +182,7 @@ const links = [
           <img src={img("/images/profile.jpg", 800)} alt="Arshad Kazi" width="640" height="800" draggable="false" oncontextmenu="return false" />
           <span class="portrait-guard" aria-hidden="true"></span>
         </span>
-        <h1><span class="w"><span>Arshad</span></span> <span class="w"><em>Kazi</em></span></h1>
+        <h1 class="mast-title"><span class="w"><span>Arshad</span></span> <span class="w"><em>Kazi</em></span></h1>
         <p class="hero-role">Engineer in computer vision; I also write essays.</p>
         <!-- Kept out of search results: a list of links reads as noise there. -->
         <p class="hero-links" data-nosnippet>
@@ -1145,7 +1145,6 @@ const links = [
      the layout measures into --head-h. */
   :global(body:has(.home) main) {
     padding-top: 0;
-    max-width: 2400px;
     padding-bottom: 0;
   }
 
@@ -1154,7 +1153,7 @@ const links = [
     height: calc(100vh - var(--head-h, 4rem));
     height: calc(100dvh - var(--head-h, 4rem));
     min-height: 420px;
-    margin: 0 calc(var(--gutter) * -1);
+    margin: 0 calc(var(--axis) * -1);
   }
 
   .field {
@@ -1177,8 +1176,8 @@ const links = [
 
   .hero-text {
     position: absolute;
-    left: var(--gutter);
-    bottom: var(--space-xl);
+    left: var(--axis);
+    bottom: var(--space-2xl);
     z-index: 2;
     pointer-events: none;
   }
@@ -1234,20 +1233,12 @@ const links = [
     inset: 0;
   }
 
+  /* The name is the shared mast (global .mast-title); only its spacing
+     and the italic's overhang are set here. */
   .hero h1 {
-    font-size: var(--fs-display-xl);
-    font-weight: var(--fw-display);
-    line-height: var(--lh-display);
-    letter-spacing: var(--track-tight);
-    margin: 0 0 var(--space-lg);
-    /* Room for the italic's overhang, so "Kazi" stays inside its box. */
+    margin-bottom: var(--space-lg);
     padding-right: 0.22em;
-  }
-
-  .hero h1 em {
-    font-style: italic;
-    font-weight: var(--fw-light);
-    color: var(--color-accent);
+    white-space: nowrap;
   }
 
   /* The links sit on a hairline, each with a small arrow; an underline
@@ -1324,8 +1315,8 @@ const links = [
 
   .field-cap {
     position: absolute;
-    right: var(--gutter);
-    bottom: var(--space-xl);
+    right: var(--axis);
+    bottom: var(--space-2xl);
     margin: 0;
     pointer-events: none;
   }
@@ -1403,8 +1394,8 @@ const links = [
   /* ── The quiet replay control ──────────────────────────── */
   .replay {
     position: absolute;
-    right: var(--gutter);
-    bottom: calc(var(--space-xl) - 0.55rem);
+    right: var(--axis);
+    bottom: calc(var(--space-2xl) - 0.55rem);
     z-index: 3;
     width: 34px;
     height: 34px;
@@ -1440,7 +1431,7 @@ const links = [
   }
 
   .field-cap {
-    right: calc(var(--gutter) + 50px) !important;
+    right: calc(var(--axis) + 50px) !important;
   }
 
   @media (max-width: 760px) {

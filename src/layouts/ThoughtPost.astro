@@ -226,7 +226,7 @@ function formatDate(dateStr: string): string {
     .blog-post-header.has-figure {
       --hero-h: max(34rem, 100vh);
       --img-w: max(calc(min(100vw, 2400px) * 1.05), calc(var(--hero-h) * 2.25));
-      --band-w: min(1240px, calc(100vw - 2 * var(--gutter)));
+      --band-w: calc(100vw - var(--sbw, 0px) - 2 * var(--axis));  /* the frame: the title lands on the axis */
       /* The title block sits in the optical middle of the screen below the
          nav, a touch above true centre, whatever the window's height. */
       display: flex;
@@ -246,6 +246,7 @@ function formatDate(dateStr: string): string {
 
     .blog-post-header.has-figure h1 {
       font-size: var(--fs-display);
+      font-weight: var(--fw-display);
       line-height: var(--lh-display);
       letter-spacing: var(--track-tight);
     }

@@ -140,7 +140,7 @@ const byIndex = new Map(posts.map((p, i) => [p.slug, i]));
                   <span class="entry-node"><span class="node-dot"></span><span class="node-date">{shortDate(post.date)}</span></span>
                   <span class="entry-quote">{opening(post.text)}</span>
                 </span>
-                <span class="entry-body">
+                <span class="entry-body" data-no={String(post.no).padStart(2, '0')}>
                   <span class="entry-meta">
                     <span class="k">No. {post.no}</span>
                     <time class="entry-date" datetime={post.date}><span class="dd">{new Date(post.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' })}</span> <span class="mm">{post.date.slice(0, 4)}</span></time>
@@ -174,7 +174,6 @@ const byIndex = new Map(posts.map((p, i) => [p.slug, i]));
   .thoughts-page {
     position: relative;
     width: 100%;
-    max-width: 1640px;
     margin: 0 auto;
   }
 
@@ -270,10 +269,12 @@ const byIndex = new Map(posts.map((p, i) => [p.slug, i]));
     margin-top: 0;
   }
 
+  /* The years are the river's chapters: set at the mast's size, so the
+     page is punctuated by four enormous numbers. */
   .year-num {
     font-family: var(--font-display);
-    font-weight: var(--fw-light);
-    font-size: var(--fs-h1);
+    font-weight: var(--fw-display);
+    font-size: var(--fs-display-xl);
     line-height: var(--lh-none);
     letter-spacing: var(--track-tight);
     color: var(--color-text);
@@ -366,6 +367,41 @@ const byIndex = new Map(posts.map((p, i) => [p.slug, i]));
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+    isolation: isolate;
+  }
+
+  /* Each essay's number, enormous and hollow behind its title, like the
+     plate number cut into the corner of an engraving. It fills with the
+     accent when the essay is reached for. */
+  .entry-body::before {
+    content: attr(data-no);
+    position: absolute;
+    z-index: -1;
+    top: -0.74em;
+    left: -0.08em;
+    font-family: var(--font-display);
+    font-size: clamp(6rem, 11vw, 11rem);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-none);
+    letter-spacing: var(--track-mast);
+    color: transparent;
+    -webkit-text-stroke: 1px color-mix(in srgb, var(--color-accent) 45%, transparent);
+    pointer-events: none;
+    transition: color var(--dur-slow) var(--ease-out);
+  }
+
+  .entry-link:hover .entry-body::before,
+  .entry-link:focus-visible .entry-body::before {
+    color: var(--color-accent-soft);
+  }
+
+  /* On a phone the plate sits right above the title: no room for it. */
+  .ledger.ranked .entry-body::before {
+    display: none;
+  }
+
+  @media (max-width: 759px) {
+    .entry-body::before { display: none; }
   }
 
   .entry-meta {

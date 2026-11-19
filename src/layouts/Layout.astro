@@ -165,6 +165,8 @@ const elsewhere = [
       (function () {
         var cover = document.querySelector('.post-cover'), toc = document.getElementById('margin-toc');
         if (!cover || !toc) return;
+        // Hidden from the first paint, so the contents never flash over the title.
+        toc.classList.add('under-cover');
         // Measured only when the page changes size; a scroll just compares.
         var queued = false, bottom = 0;
         function measure() { bottom = cover.getBoundingClientRect().bottom + scrollY; check(); }
@@ -327,6 +329,9 @@ const elsewhere = [
           <span class="label">End of frame <span class="sig">&#9632;</span></span>
         </div>
       </div>
+      <!-- The signature: the name set the width of the frame, sinking
+           below the bottom edge of the page like a sun below a horizon. -->
+      <p class="foot-sign" aria-hidden="true"><span>Arshad</span> <em>Kazi</em></p>
     </footer>
     <script is:inline>
       // A long equation or a wide diagram is scaled to fit its column, so
@@ -462,7 +467,10 @@ const elsewhere = [
     // The header's real height, for anything that has to fill exactly the
     // rest of the screen. It changes when the nav wraps on a phone.
     function measureHead() {
-      document.documentElement.style.setProperty('--head-h', head.offsetHeight + 'px');
+      var root = document.documentElement;
+      root.style.setProperty('--head-h', head.offsetHeight + 'px');
+      // The scrollbar's width, so the frame's axis is exact (see --axis).
+      root.style.setProperty('--sbw', (innerWidth - root.clientWidth) + 'px');
     }
     measureHead();
     if (window.ResizeObserver) new ResizeObserver(measureHead).observe(head);

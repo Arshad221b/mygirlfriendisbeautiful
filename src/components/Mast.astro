@@ -1,19 +1,22 @@
 ---
-/* The head of an index page, said as one sentence rather than shown as a
-   title and a table of numbers: the page's name small above, then what
-   the collection is, its counts in the accent, at a reading-display size.
-   On Blogs and Thoughts the sentence runs on into the search below it
-   ("Find the one about …"). Anything else (a folded note) goes in the
-   slot. The statement may carry <em> for the counts. */
+/* The head of an index page. The page's name is the mast, set at the one
+   display size every index page shares (Home's name, Blogs, Thoughts,
+   Contact), its last word in the italic accent; then the sentence saying
+   what the collection is, its counts in the accent. On Blogs and Thoughts
+   the sentence runs on into the search below it ("Find the one about …").
+   Anything else (a folded note) goes in the slot. The statement may carry
+   <em> for the counts. */
 interface Props {
   name: string;
   statement: string;
 }
 const { name, statement } = Astro.props;
+const words = name.trim().split(/\s+/);
+const last = words.pop();
 ---
 
 <header class="mast">
-  <h1 class="page-name">{name}</h1>
+  <h1 class="page-name mast-title">{words.length > 0 && words.join(' ') + ' '}<em>{last}</em></h1>
   <p class="page-statement" set:html={statement} />
   <slot />
 </header>

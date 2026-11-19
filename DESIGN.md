@@ -63,8 +63,8 @@ Three families, each with one job:
 
 | Token | Size | Use |
 |---|---|---|
-| `--fs-micro` | 0.6rem | Mono captions, ticks, counters, section numbers |
-| `--fs-label` | 0.68rem | Mono labels, eyebrows, nav, tags, dates |
+| `--fs-micro` | 0.68rem | Mono captions, ticks, counters, section numbers (the floor: nothing smaller) |
+| `--fs-label` | 0.75rem | Mono labels, eyebrows, nav, tags, dates |
 | `--fs-small` | 0.82rem | Notes, figure captions, secondary lines |
 | `--fs-ui` | 1rem | Buttons, inputs, list text |
 | `--fs-body` | 1.16rem | **Reading text** |
@@ -73,7 +73,7 @@ Three families, each with one job:
 | `--fs-h2` | 1.5 → 2.1rem | Section heads, row titles |
 | `--fs-h1` | 2.2 → 3.6rem | Article titles, big numerals |
 | `--fs-display` | 3.4 → 6.4rem | The essay hero title (wide screens) |
-| `--fs-display-xl` | 3.4 → 8.4rem | Page masts: home, Blogs, Thoughts, Contact |
+| `--fs-display-xl` | 3.6 → 9.6rem | Page masts: home, Blogs, Thoughts, Contact (`.mast-title`) |
 
 - `em` sizes are allowed only for inline text sized against its parent
   (a superscript count, an icon in a line). `vw` sizes only inside the
@@ -111,6 +111,18 @@ Two layers of one 4px grid:
 
 ## 5. Layout
 
+- **The axis.** One left edge and one right edge for the whole site:
+  `--axis` is the side margin of the frame (`--frame-max` wide, never less
+  than `--frame-pad` from the window). The logo, the nav's end, every
+  page's opening title, the Blogs and Thoughts lists and the footer all
+  sit on it, at every width. Full-width pages pad with `var(--axis)`;
+  breakouts pull back with `calc(-1 * var(--axis))`. Never position a
+  page's opening with its own margin.
+- Two kinds of page, and only two: **openings** (Home, Blogs, Thoughts,
+  Contact, and essays with a plate on wide screens) start on the axis;
+  **working pages** (notebook fronts and days, essays without a plate,
+  anything below 1240px that reads as one column) are one centred column,
+  title included.
 - Widths: `--max-width` (page), `--column` (article column), `--measure`
   (longest reading line). Text never runs wider than `--measure`.
 - `--head-h` is the header's measured height; anything that must fill "the
@@ -215,9 +227,15 @@ screen; no frame loop runs forever.
 ## 13. Components
 
 - **Site bar** — sticky, `--z-header`, frosts when scrolled.
-- **Page heading** (Blogs, Thoughts, Contact) — said as a sentence, one
-  shared style in `global.css`: `.page-name` (the h1: mono, small, accent)
-  and `.page-statement` (`--fs-statement`, light, the counts in italic
+- **Mast** (Home, Blogs, Thoughts, Contact) — one title, `.mast-title`:
+  `--fs-display-xl`, `--fw-display`, `--lh-mast`, `--track-mast`, on the
+  axis, its last word in the italic accent ("Arshad *Kazi*", "Technical
+  *Blogs*", "Personal *Thoughts*", "Get in *touch*"). It is the loudest
+  thing on the site and appears once per page; nothing else competes
+  with it on the first screen.
+- **Page heading** (Blogs, Thoughts, Contact) — the mast, then said as a
+  sentence, one shared style in `global.css`: `.page-name` (the h1, the
+  mast) and `.page-statement` (`--fs-statement`, light, the counts in italic
   orange). On Blogs and Thoughts the search continues the sentence:
   `.seek-lead` ("Find the one about") and the field at the same size.
   Pages set only the spacing around them, never their type.
@@ -232,8 +250,11 @@ screen; no frame loop runs forever.
   (titles level) and the search sits at the foot of the screen; the list
   begins below the fold. The topics show only once
   the reader goes to the search.
-- **Essay header** — date, title (`--fs-h1`, `--fs-display` on wide
-  screens), readout (number, words, read time), plate.
+- **Essay header** — date, title (`--fs-h1` light, `--fs-display` at
+  `--fw-display` on wide screens, on the axis), readout (number, words,
+  read time), plate.
+- **Notebook day header** — `.day-page-title`, the same in every notebook:
+  `--fs-h1`, light, tight.
 - **Quotes and asides** — no side rules; three dots above and below,
   serif italic in `--color-text-secondary`.
 - **Contents** — in the margin from 1240px, between the back key and the
@@ -246,6 +267,23 @@ screen; no frame loop runs forever.
   navigation, underlined in reading text.
 - **Tags** — mono `--fs-label`, `--color-tag-*`, `--radius-sm`.
 - **Code** — mono, `--color-code-bg`, `--radius-sm`, wraps.
+
+### Signature moves (where the site is allowed to shout)
+
+Each appears once per place, always in the mast's hairline (`--fw-display`,
+`--lh-mast`, `--track-mast`), and is the only loud thing in its view.
+
+- **Signature** — the footer ends on "Arshad *Kazi*" sized to the full
+  frame width (`.foot-sign`), its feet cut off by the page's bottom edge.
+- **Chapters (Blogs)** — each topic's name as an outline across the frame
+  (1px `-webkit-text-stroke`, transparent fill), its roman numeral and
+  count hung beside it in mono; it fills with ink on hover or when open.
+- **Plate numbers (Thoughts)** — each essay's number, huge and hollow in a
+  45% accent outline behind its title, filling with `--color-accent-soft`
+  on hover. Hidden on phones and in ranked search results.
+- **Years (Thoughts)** — the river's year marks at `--fs-display-xl`.
+- **Opening letter** — the first letter of every essay dropped three lines
+  in the accent (`initial-letter`, with a float fallback).
 
 ## 14. Performance
 

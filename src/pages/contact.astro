@@ -36,7 +36,7 @@ const reasons = ['a job', 'a collaboration', 'something you wrote', 'just saying
 
   <div class="contact-page">
     <Mast
-      name="Contact"
+      name="Get in touch"
       statement="Write to <em>me</em> about a job, a collaboration, something I wrote, or just to say hello. I read every message."
     />
 
@@ -108,8 +108,12 @@ const reasons = ['a job', 'a collaboration', 'something you wrote', 'just saying
     position: relative;
     z-index: 1;
     width: 100%;
+    /* On the axis like every other page, the open space to the right
+       left to the drawing behind. */
     max-width: 1000px;
-    margin-inline: auto;
+    margin-inline: 0 auto;
+    /* The same air above the mast as the other pages' openings. */
+    padding-top: clamp(var(--space-lg), 9vh, var(--space-3xl));
   }
 
   /* Like the margin on Blogs and Thoughts: each part's name hangs in a

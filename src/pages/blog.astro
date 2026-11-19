@@ -195,7 +195,7 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
         {fields4.map(t => <div class="plate-slot" data-t={t.id} data-set={JSON.stringify(t.set)}></div>)}
       </div>
       <div class="op-text">
-        <h1 class="op-title">Technical<br /><span class="op-accent">Blogs</span></h1>
+        <h1 class="op-title mast-title">Technical<br /><em>Blogs</em></h1>
         <p class="op-say">Things I had to understand from the ground up, written down while learning them. Notebooks follow a subject day by day; essays make one argument.</p>
         <nav class="op-index" aria-label="Fields">
           {fields4.map((t, i) => (
@@ -227,7 +227,7 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
       <section class="plate-sec" id={t.id} data-t={t.id} style={`--n:${t.items.length}`}>
         <header class="pl-head">
           <details class="pl-about">
-            <summary class="pl-name" title="Scope of this topic"><h2>{t.name}<span class="pl-plus" aria-hidden="true">+</span></h2></summary>
+            <summary class="pl-name" title="Scope of this topic"><span class="pl-num" aria-hidden="true"><span>{ROMAN[i]}</span> / {t.items.length} {t.items.length === 1 ? 'work' : 'works'}</span><h2>{t.name}<span class="pl-plus" aria-hidden="true">+</span></h2></summary>
             <p class="pl-intro">{t.intro}</p>
           </details>
         </header>
@@ -274,14 +274,13 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
   :global(body) { overflow-x: clip; }
   .bp {
     --ease: cubic-bezier(0.22, 0.8, 0.2, 1);
-    --side: clamp(1rem, 4.5vw, 5rem);
+    --side: var(--axis);
     box-sizing: border-box;
-    /* Full width up to a point, then centred, so a wide screen does not
-       leave everything leaning left (the opening stays the full width). */
-    width: 100vw;
+    /* The whole width of the window, its contents on the site's axis. */
+    width: auto;
     max-width: none;
-    margin-inline: calc(50% - 50vw);
-    padding-inline: var(--side);
+    margin-inline: calc(-1 * var(--axis));
+    padding-inline: var(--axis);
   }
 
 
@@ -310,24 +309,16 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
 
   .op-text { grid-column: 1; grid-row: 1; position: relative; z-index: 2; }
 
-  .op-title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: var(--fw-display);
-    font-size: var(--fs-display);
-    line-height: 0.9;
-    letter-spacing: -0.045em;
-  }
-
-  .op-accent { color: var(--color-accent); }
+  /* The title is the shared mast (global .mast-title). */
+  .op-title { white-space: nowrap; }
 
   .op-say {
     max-width: 38ch;
     margin: clamp(1rem, 3vh, 1.75rem) 0 0;
     font-family: var(--font-serif);
     font-style: italic;
-    font-size: var(--fs-ui);
-    line-height: 1.55;
+    font-size: var(--fs-lead);
+    line-height: var(--lh-snug);
     color: var(--color-text-secondary);
   }
 
@@ -439,9 +430,14 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
   /* The field's heading: an interlude between groups of works, not one of
      them. Centred where the works sit on their grid; the name large but
      quiet, the intro small; there to orient, not to be read each time. */
+  /* Each topic opens like a chapter: its name set enormous across the
+     frame as an outline, the hairline of an engraver's proof, so it is
+     the biggest thing on the screen and still lighter than the work
+     beneath it. Hovered, the outline fills with ink. */
   .pl-head {
-    margin: 0 0 clamp(1.75rem, 4.5vh, 2.75rem);
-    text-align: center;
+    margin: clamp(2rem, 8vh, 5rem) 0 clamp(2rem, 6vh, 3.5rem);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-text);
   }
   .pl-k {
     margin: var(--space-3) 0 0;
@@ -452,36 +448,32 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
     color: var(--color-text-muted);
   }
   .pl-k span { margin-right: 1.2em; color: var(--color-accent); }
-  /* The topic's name set into the divider: the line runs in from both
-     edges and breaks around it, drawing outward from the name as the topic
-     comes into view. */
   .pl-name {
-    display: block;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    column-gap: var(--space-lg);
     margin: 0;
+    color: var(--color-text);
+  }
+  /* The chapter's number and count, small, hung beside the giant word. */
+  .pl-num {
+    padding-top: 0.9em;
     font-family: var(--font-mono);
-    font-weight: 400;
     font-size: var(--fs-label);
-    line-height: 1;
     letter-spacing: var(--track-caps);
     text-transform: uppercase;
-    color: var(--color-text);
+    color: var(--color-text-muted);
     white-space: nowrap;
   }
-  .pl-name h2 { display: flex; align-items: center; }
-  .pl-name h2::before, .pl-name h2::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--color-text);
-    transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+  .pl-num span { color: var(--color-accent); }
+  @media (max-width: 760px) {
+    .pl-name { grid-template-columns: 1fr; row-gap: var(--space-2); }
+    .pl-num { padding-top: 0; }
   }
-  .pl-name h2::before { transform-origin: right; margin-right: clamp(1rem, 2.4vw, 2.25rem); }
-  .pl-name h2::after { transform-origin: left; margin-left: clamp(1rem, 2.4vw, 2.25rem); }
-  :global(.bp.moving) .pl-head:not(.in) .pl-name h2::before,
-  :global(.bp.moving) .pl-head:not(.in) .pl-name h2::after { transform: scaleX(0); transition-duration: 0ms; }
 
   .pl-intro {
-    margin: var(--space-3) auto 0;
+    margin: var(--space-3) 0 0;
     max-width: 64ch;
     font-family: var(--font-serif);
     font-style: italic;
@@ -504,13 +496,27 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
      the divider, turning to a cross when the note is open. */
   .pl-name { cursor: pointer; list-style: none; }
   .pl-name::-webkit-details-marker { display: none; }
-  .pl-name h2 { margin: 0; font: inherit; color: inherit; letter-spacing: inherit; white-space: nowrap; }
+  .pl-name h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: var(--fw-display);
+    font-size: clamp(3.2rem, 10vw, 10rem);
+    line-height: var(--lh-mast);
+    letter-spacing: var(--track-mast);
+    text-wrap: balance;
+    /* An outline, not a fill: enormous and still quiet. */
+    color: transparent;
+    -webkit-text-stroke: 1px var(--color-text);
+    transition: color var(--dur-slow) var(--ease-out);
+  }
+  .pl-name:hover h2, .pl-about[open] .pl-name h2 { color: var(--color-text); }
   .pl-plus {
     display: inline-block;
-    margin-left: 0.6em;
+    margin-left: 0.15em;
     font-family: var(--font-mono);
-    font-size: 1.35em;
-    vertical-align: -0.08em;
+    font-size: 0.3em;
+    vertical-align: 1.6em;
+    -webkit-text-stroke: 0;
     color: var(--color-accent);
     transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -667,7 +673,7 @@ const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
     .op-art { order: 2; min-height: 0; height: 40svh; margin: var(--space-md) 0; }
     .op-art .plate-slot { inset: 0; }
     .op-text { display: contents; }
-    .op-title { order: 1; font-size: clamp(3rem, 15vw, 4.2rem); }
+    .op-title { order: 1; }
     .op-say { order: 3; margin-top: 0; }
     .op-index { order: 4; margin-top: var(--space-xl); }
     .op-index a { grid-template-columns: 2.2rem auto 1fr; }
