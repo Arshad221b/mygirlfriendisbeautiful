@@ -73,7 +73,7 @@ Three families, each with one job:
 | `--fs-h2` | 1.5 → 2.1rem | Section heads, row titles |
 | `--fs-h1` | 2.2 → 3.6rem | Article titles, big numerals |
 | `--fs-display` | 3.4 → 6.4rem | The essay hero title (wide screens) |
-| `--fs-display-xl` | 3.6 → 9.6rem | Page masts: home, Blogs, Thoughts, Contact (`.mast-title`) |
+| `--fs-display-xl` | 3.6 → 12rem | Page masts: home, Blogs, Thoughts, Contact (`.mast-title`) |
 
 - `em` sizes are allowed only for inline text sized against its parent
   (a superscript count, an icon in a line). `vw` sizes only inside the

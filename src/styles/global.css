@@ -73,7 +73,7 @@
      wider of the page's side margin and the space left over once the
      frame reaches its widest. --sbw is the scrollbar's width, measured by
      the layout, so the axis is exact where scrollbars take room. */
-  --frame-max: 1280px;
+  --frame-max: 1760px;
   --frame-pad: clamp(1.25rem, 5vw, 5rem);
   --axis: max(var(--frame-pad), calc((100vw - var(--sbw, 0px) - var(--frame-max)) / 2));
   --space-xs: 0.3rem;
@@ -101,7 +101,8 @@
   --fs-h2: clamp(1.5rem, 3vw, 2.1rem);
   --fs-h1: clamp(2.2rem, 5vw, 3.6rem);
   --fs-display: clamp(3.4rem, 4.9vw, 6.4rem);
-  --fs-display-xl: clamp(3.6rem, 10vw, 9.6rem);  /* page masts: one size on Home, Blogs, Thoughts, Contact */
+  --fs-display-xl: clamp(3.6rem, 10vw, 12rem);  /* page masts: one size on Home, Blogs, Thoughts, Contact */
+  --fs-index: clamp(2.2rem, 5.6vw, 8.5rem);  /* the Blogs index: one huge title to a row */
   --fs-statement: clamp(1.9rem, 1.6vw + 1.3rem, 3.2rem); /* index page headings, said as a sentence */
 
   /* Weights. Newsreader runs 200–700; Plex Mono has 400 and 500. */

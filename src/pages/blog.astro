@@ -1,7 +1,8 @@
 ---
 import { img, share, widths } from '../lib/media';
-import SketchPlate from '../components/SketchPlate.astro';
-/* Blogs: the essays and the notebooks, on one page.
+/* Blogs: the Index. Everything written, as one wall of words and one
+   table of huge titles. (The data below is the same as ever: essays and
+   notebooks, their words counted from their own sources.)
 
    One timeline, newest first, under clear year headings. Every piece is the
    same row: its date in the margin, its figure at full width, what it is,
@@ -25,12 +26,6 @@ const essayWords: Record<string, number> = Object.fromEntries(Object.entries(ess
 const totalWords = Object.values(essayWords).reduce((a, b) => a + b, 0) + notebooks.reduce((a, nb) => a + nb.words, 0);
 const wordsLabel = (n: number) => (n > 0 ? `${n.toLocaleString('en-US')} words · ` : '');
 
-// At the head of the page, in particles of ink: Leonardo's flight, water and
-// the measured body, Michelangelo's figures and plan, Palladio's villa and
-// Piranesi's impossible space.
-const sketches = ['contact/flying', 'blog-bg/ramanujan-master-theorem', 'india/kailasa', 'blog-bg/al-sufi-ursa-major', 'blog-bg/lilavati', 'blog-bg/al-jazari-elephant-clock', 'india/bakhshali', 'contact/vitruvian', 'india/lahore-astrolabe', 'india/taj-site-plan', 'blog-bg/hooke-flea', 'india/aryabhata', 'india/dilwara', 'blog-bg/cajal', 'blog-bg/vesalius', 'blog-bg/galileo-moon', 'blog-bg/kepler', 'blog-bg/darwin-tree', 'blog-bg/haeckel', 'blog-bg/wright', 'blog-bg/tulp', 'india/great-bath', 'india/harappan-weights', 'india/dholavira', 'india/iron-pillar', 'india/chand-baori', 'india/konark-wheel', 'india/jantar-mantar', 'india/misra-yantra', 'india/ujjain-observatory', 'blog-bg/durer-lute', 'blog-bg/kircher-camera-obscura', 'blog-bg/newton-opticks', 'blog-bg/cajal-retina', 'blog-bg/golgi-hippocampus', 'blog-bg/descartes-homme', 'blog-bg/willis-cerebri', 'blog-bg/pascaline', 'blog-bg/leibniz-reckoner', 'blog-bg/lovelace-note-g', 'blog-bg/galton-quincunx', 'blog-bg/pascal-triangle']
-  .map(n => img(`/images/${n}.jpg`, 1600));
-const credits = [{"title": "Design for a flying machine, c. 1488", "by": "Leonardo da Vinci · Milan", "india": false, "note": "Leonardo's ornithopter: a pilot pumping wings, designed from watching birds.", "open": true}, {"title": "The Master Theorem, c. 1913", "by": "Srinivasa Ramanujan · Madras", "india": true, "note": "A page from Ramanujan's notebooks; the master theorem turns a series into an integral."}, {"title": "Kailasa Temple, c. 760 (drawn 1915)", "by": "Rashtrakuta builders · Ellora", "india": true, "note": "Carved downward from a single hill of basalt: the largest monolithic structure ever cut.", "open": true}, {"title": "Book of Fixed Stars: Ursa Major, 964", "by": "Abd al-Rahman al-Sufi · Isfahan", "india": false, "note": "Ptolemy's star catalogue checked against the sky, with the first recorded sighting of Andromeda.", "open": true}, {"title": "Līlāvatī, c. 1150", "by": "Bhāskara II · Ujjain", "india": true, "note": "Bhāskara's arithmetic, posed as problems to a girl named Līlāvatī; taught across India for centuries."}, {"title": "The Elephant Clock, 1206", "by": "Ismail al-Jazari · Diyarbakır", "india": false, "note": "A water clock driven by a sinking float, marking each half hour with automata.", "open": true}, {"title": "Bakhshali manuscript, c. 3rd–4th century", "by": "Unknown mathematicians · Bakhshali", "india": true, "note": "Birch-bark arithmetic with an early written zero and a square-root method still used today."}, {"title": "Vitruvian Man, c. 1490", "by": "Leonardo da Vinci · Milan", "india": false, "note": "The body inscribed in a circle and a square: Vitruvius's proportions tested by measurement.", "open": true}, {"title": "Astrolabe, 1666", "by": "Jamal al-Din ibn Muqim · Lahore", "india": true, "note": "An analog computer for the sky: star positions, time and latitude, from Lahore's instrument makers."}, {"title": "Taj Mahal, site plan, 1632–53", "by": "Ustad Ahmad Lahauri · Agra", "india": true, "note": "The Taj complex as a grid of squares and axes: Mughal geometry laid out at the scale of a city block.", "open": true}, {"title": "Micrographia: the flea, 1665", "by": "Robert Hooke · London", "india": false, "note": "From the first great book of microscopy: a flea drawn at a size nobody had seen before."}, {"title": "Aryabhata, 476–550", "by": "Statue at IUCAA · Pune", "india": true, "note": "Aryabhata gave π to four decimals and said the Earth turns on its axis, in 499 CE."}, {"title": "Dilwara Temples, ceiling, 11th–13th century", "by": "Jain craftsmen · Mount Abu", "india": true, "note": "A marble ceiling carved into concentric rings of near-transparent lace by Jain craftsmen."}, {"title": "Purkinje cell, 1899", "by": "Santiago Ramón y Cajal · Madrid", "india": false, "note": "Cajal saw that the brain is made of separate cells; his neurons are still the textbook drawings.", "open": true}, {"title": "De humani corporis fabrica, 1543", "by": "Andreas Vesalius · Padua", "india": false, "note": "Anatomy from dissection rather than authority: Vesalius corrected Galen by looking.", "open": true}, {"title": "Sidereus Nuncius: the Moon, 1610", "by": "Galileo Galilei · Padua", "india": false, "note": "Through a telescope he built himself, Galileo saw the Moon has mountains and shadows.", "open": true}, {"title": "Mysterium Cosmographicum, 1596", "by": "Johannes Kepler · Graz", "india": false, "note": "Kepler's attempt to fit the planets' orbits between the five Platonic solids: wrong, and productive.", "open": true}, {"title": "I think: the tree of life, 1837", "by": "Charles Darwin · London", "india": false, "note": "'I think', then a branching tree: Darwin's first sketch of common descent, in a notebook.", "open": true}, {"title": "Kunstformen der Natur: Phaeodaria, 1904", "by": "Ernst Haeckel · Jena", "india": false, "note": "Microscopic plankton drawn by Haeckel, whose plates made biology's symmetries visible.", "open": true}, {"title": "First flight, 17 December 1903", "by": "John T. Daniels · Kitty Hawk", "india": false, "note": "Twelve seconds, 37 metres: the first controlled, powered flight, photographed as it lifted."}, {"title": "The Anatomy Lesson of Dr Tulp, 1632", "by": "Rembrandt van Rijn · Amsterdam", "india": false, "note": "A public dissection in Amsterdam: knowledge as something you open up and show."}, {"title": "Mohenjo-daro, c. 2500 BCE", "by": "Harappan builders · Mohenjo-daro", "india": true, "note": "A planned city on a grid, with standard bricks, covered drains and the Great Bath."}, {"title": "Indus weights, c. 2500 BCE", "by": "Harappan craftsmen · Mohenjo-daro", "india": true, "note": "Polished chert cubes in a binary-then-decimal series: one standard of weight across a civilisation."}, {"title": "Dholavira reservoir, c. 2500 BCE", "by": "Harappan engineers · Dholavira", "india": true, "note": "Stone-cut reservoirs that caught every monsoon, in a city built on the edge of a salt desert."}, {"title": "Iron Pillar, c. 400 CE (photographed 1858)", "by": "Gupta metallurgists · Delhi", "india": true, "note": "Six tonnes of wrought iron that has barely rusted in sixteen centuries."}, {"title": "Chand Baori, 9th century", "by": "Nikumbha builders · Abhaneri", "india": true, "note": "3,500 steps in perfect symmetry, thirteen storeys down to groundwater."}, {"title": "Konark wheel, 13th century", "by": "Eastern Ganga sculptors · Konark", "india": true, "note": "One of 24 stone wheels on the Sun Temple; its spokes cast shadows that tell the time."}, {"title": "Jantar Mantar, 1734", "by": "Sawai Jai Singh II · Jaipur", "india": true, "note": "Instruments the size of buildings, so stone could measure the sky to two seconds of time."}, {"title": "Misra Yantra, 1724", "by": "Sawai Jai Singh II · Delhi", "india": true, "note": "Five instruments in one, reading noon at observatories across the world."}, {"title": "Vedh Shala, 1725", "by": "Sawai Jai Singh II · Ujjain", "india": true, "note": "Built on the meridian Indian astronomers used as their prime meridian for over a thousand years."}, {"title": "Man Drawing a Lute, 1525", "by": "Albrecht Dürer · Nuremberg", "india": false, "note": "A machine for perspective: a thread from one fixed point to each point of the lute, marked where it crosses the frame.", "open": true}, {"title": "Camera obscura, 1646", "by": "Athanasius Kircher · Rome", "india": false, "note": "A room-sized pinhole camera: the world outside thrown upside down on the walls inside, as on the back of an eye.", "open": true}, {"title": "Opticks: refraction, 1704", "by": "Isaac Newton · London", "india": false, "note": "Light bent by a prism, from the experiments in which Newton split white light into its colours.", "open": true}, {"title": "Structure of the mammalian retina, 1900", "by": "Santiago Ramón y Cajal · Madrid", "india": false, "note": "The retina's layers, from rods and cones to the optic nerve, with the direction in which the signal flows.", "open": true}, {"title": "The hippocampus, 1885", "by": "Camillo Golgi · Pavia", "india": false, "note": "From Golgi's silver stain, the method that first made single neurons visible."}, {"title": "L'Homme: the reflex, 1664", "by": "René Descartes · Paris", "india": false, "note": "Fire at the foot tugs a thread to the brain, which moves the body: the first mechanical account of a reflex."}, {"title": "Cerebri anatome, 1664", "by": "Thomas Willis · London", "india": false, "note": "The first detailed atlas of the brain and its nerves, with plates drawn by Christopher Wren.", "open": true}, {"title": "The Pascaline, 1642", "by": "Blaise Pascal · Paris", "india": false, "note": "A mechanical calculator: geared wheels that carry a digit from one wheel to the next.", "open": true}, {"title": "Stepped reckoner, 1673", "by": "Gottfried Wilhelm Leibniz · Hanover", "india": false, "note": "The first calculator that could multiply, by a stepped drum that adds a number again and again.", "open": true}, {"title": "Note G, 1843", "by": "Ada Lovelace · London", "india": false, "note": "The table for computing Bernoulli numbers on Babbage's Analytical Engine: the first published program.", "open": true}, {"title": "The quincunx, 1889", "by": "Francis Galton · London", "india": false, "note": "Shot falling through rows of pins piles up into a bell curve: the normal distribution, made by hand.", "open": true}, {"title": "Triangle arithmétique, 1665", "by": "Blaise Pascal · Paris", "india": false, "note": "Each number the sum of the two above it: the table behind binomial probabilities.", "open": true}];
 const title = "Technical Blogs — Arshad Kazi";
 
 // `contents` mirrors the section headings inside each post, so the index says
@@ -183,613 +178,607 @@ const fields4 = TOPIC_DEFS.map(t => {
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 const k1 = (n: number) => `${(n / 1000).toFixed(1).replace('.0', '')}k`;
 const mon = (d: string) => fmt(d, { month: 'short', year: 'numeric' });
+
+/* ── The Index ─────────────────────────────────────────────── */
+// Numbered in the order they were written, so a number never changes when
+// something new arrives; listed newest first.
+const chrono = [...items].sort((a, b) => a.date.localeCompare(b.date));
+const numOf = (it: Item) => String(chrono.indexOf(it) + 1).padStart(2, '0');
+const fieldOf = (it: Item) => fields4.find(f => f.keys.includes(keyOf(it)));
+const wordsOf = (it: Item) => (it.kind === 'essay' ? it.words : it.nb.words);
+const allWords = items.reduce((n, it) => n + wordsOf(it), 0);
+const firstYear = chrono[0].date.slice(0, 4);
+const lastYear = chrono[chrono.length - 1].date.slice(0, 4);
+
+// The wall: every section of every essay and every written day of every
+// notebook, as one passage. Each phrase links to its place.
+const wall = items.flatMap(it => {
+  const f = fieldOf(it)?.id ?? '';
+  return it.kind === 'essay'
+    ? it.contents.map((c, j) => ({ t: c, href: `${it.href}#section-${j + 1}`, key: keyOf(it), f }))
+    : it.nb.days.filter(d => d.href).map(d => ({ t: d.title, href: d.href!, key: keyOf(it), f }));
+});
+
 ---
 <Layout title={title} activeNav="/blog" description="Essays and day-by-day notebooks in four topics: vision, neuroscience, machine learning and their foundations. Notes on things I finally understood, not tutorials." ogImage={share("/images/share-blog.jpg")}>
-  <SketchPlate sketches={sketches} credits={credits} />
-  <div class="bp" id="bp">
+  <div class="ix" id="ix">
 
-    <!-- Opening: the drawing, the name, the four fields. -->
-    <section class="open">
-      <div class="op-art" aria-hidden="true">
-        <div class="plate-slot on" data-t="all" data-set={JSON.stringify(fields4.flatMap(t => t.set))}></div>
-        {fields4.map(t => <div class="plate-slot" data-t={t.id} data-set={JSON.stringify(t.set)}></div>)}
-      </div>
-      <div class="op-text">
-        <h1 class="op-title mast-title">Technical<br /><em>Blogs</em></h1>
-        <p class="op-say">Things I had to understand from the ground up, written down while learning them. Notebooks follow a subject day by day; essays make one argument.</p>
-        <nav class="op-index" aria-label="Fields">
-          {fields4.map((t, i) => (
-            <a href={`#${t.id}`} data-t={t.id}>
-              <span class="oi-n">{ROMAN[i]}</span>
-              <span class="oi-name">{t.name}</span>
-              <span class="oi-c">{t.items.length}</span>
-            </a>
-          ))}
-        </nav>
-        <div class="op-find">
-          <label class="find"><span class="find-k">Find</span><input type="search" id="find" placeholder="a word, a method, a question" autocomplete="off" enterkeyhint="search" aria-label="Search the blogs" /></label>
-          <details class="why">
-            <summary>Why I write these</summary>
-            <div class="why-body">
-              <p>I write these to check whether I actually understand something. If I can explain it from the start, with the reasoning and not just the result, I do. If I can't, the gap shows up on the page.</p>
-              <p>I'm mostly self-taught, so I don't always know what I'm missing. Writing is how I find out.</p>
-              <p>I move between subjects because that's how my curiosity works, and because an idea often makes more sense once I've seen it somewhere else.</p>
-              <p>These are working notes, not tutorials. Some of it will be wrong. Where I'm not sure, I say so.</p>
-            </div>
-          </details>
-        </div>
-      </div>
+    <!-- ── The opening: a sentence you finish, over a wall of everything written. -->
+    <section class="ix-open">
+      <p class="ix-strip">
+        <span><b>Index</b> of works</span>
+        <span>{items.length} pieces</span>
+        <span>{k1(allWords)} words</span>
+        <span>{firstYear}&thinsp;&rarr;&thinsp;{lastYear}</span>
+      </p>
+
+      <h1 class="ix-title">
+        <span class="ix-title-a">Technical</span>
+        <label class="ix-ask">
+          <span class="visually-hidden">Search everything written</span>
+          <input type="search" id="ix-q" placeholder="Blogs" autocomplete="off" enterkeyhint="search" spellcheck="false" />
+          <span class="ix-key" aria-hidden="true"><kbd>/</kbd> to search</span>
+        </label>
+      </h1>
+
+      <p class="ix-wall" id="ix-wall" aria-label="Every section and every day, as one passage">
+        {wall.map(w => <Fragment><a href={w.href} data-key={w.key} data-f={w.f}>{w.t}</a><span class="sl" aria-hidden="true"> / </span></Fragment>)}
+      </p>
+      <button type="button" class="ix-wall-more" id="ix-wall-more" aria-controls="ix-wall" aria-expanded="false">All {wall.length} sections and days</button>
     </section>
 
-    <!-- The atlas: each field a plate, its works the figures on it, set
-         large and equal across the full width, numbered and captioned. -->
-    {fields4.map((t, i) => (
-      <section class="plate-sec" id={t.id} data-t={t.id} style={`--n:${t.items.length}`}>
-        <header class="pl-head">
-          <details class="pl-about">
-            <summary class="pl-name" title="Scope of this topic"><span class="pl-num" aria-hidden="true"><span>{ROMAN[i]}</span> / {t.items.length} {t.items.length === 1 ? 'work' : 'works'}</span><h2>{t.name}<span class="pl-plus" aria-hidden="true">+</span></h2></summary>
-            <p class="pl-intro">{t.intro}</p>
-          </details>
-        </header>
-        <div class="figs">
-          {t.items.map((it, k) => {
-            const rows = it.kind === 'essay'
-              ? it.contents.map((c, j) => ({ n: String(j + 1).padStart(2, '0'), t: c, href: `${it.href}#section-${j + 1}` }))
-              : it.nb.days.map(d => ({ n: String(d.day).padStart(2, '0'), t: d.title, href: d.href, m: d.href ? `${d.minutes} min` : 'soon' }));
-            return (
-              <figure class={`fig ${it.kind}`} id={keyOf(it)}
-                      data-text={[it.title, it.description, t.name, ...it.tags, ...(it.kind === 'essay' ? it.contents : it.nb.days.map(d => d.title))].join(' ').toLowerCase()}>
-                <a class="fig-img" href={it.href} tabindex="-1" aria-hidden="true">
-                  <img src={it.image} srcset={widths(it.src, [480, 720, 960, 1280, 1600])}
-                       sizes="(max-width: 900px) calc(100vw - 2rem), 46vw"
-                       data-ink crossorigin="anonymous" alt="" width="1600" height="840" loading="lazy" decoding="async" />
-                </a>
-                <figcaption class="cap">
-                  <p class="cap-k"><span class="cap-n">Fig. {i + 1}.{k + 1}</span>
-                    {it.kind === 'essay'
-                      ? <Fragment>Essay · {mon(it.date)} · {it.minutes} min</Fragment>
-                      : <Fragment>Notebook · {it.nb.days.length} days · {k1(it.nb.words)} words{it.nb.inProgress && <em> · ongoing</em>}</Fragment>}
-                  </p>
-                  <h3 class="cap-title"><a href={it.href}>{it.title}</a></h3>
-                  <p class="cap-desc">{it.description}</p>
-                  <ol class={`cap-toc ${it.kind}`}>
-                    {rows.map((r: { n: string; t: string; href?: string; m?: string }) => <li class={r.href ? '' : 'later'}>{r.href
-                      ? <a href={r.href}><i>{r.n}</i><span class="t">{r.t}{r.m && <span class="m">{r.m}</span>}</span></a>
-                      : <span class="a"><i>{r.n}</i><span class="t">{r.t}{r.m && <span class="m">{r.m}</span>}</span></span>}</li>)}
-                  </ol>
-                  {rows.length > 3 && <button type="button" class="toc-more" aria-expanded="false">+ {rows.length - 3} more {it.kind === 'essay' ? 'sections' : 'days'}</button>}
-                </figcaption>
-              </figure>
-            );
-          })}
-        </div>
-      </section>
-    ))}
-    <p class="none" id="none" hidden>Nothing written on that yet.</p>
+    <!-- ── The switches: the four fields, pinned while the list scrolls by. -->
+    <nav class="ix-bar" aria-label="Fields">
+      <button type="button" class="on" data-f="">All<sup>{items.length}</sup></button>
+      {fields4.map(f => <button type="button" data-f={f.id}>{f.name}<sup>{f.items.length}</sup></button>)}
+      <span class="ix-count" id="ix-count" aria-live="polite"></span>
+    </nav>
+
+    <!-- ── The table: one huge title to a row. -->
+    <ol class="ix-list" id="ix-list">
+      {items.map(it => {
+        const f = fieldOf(it);
+        const text = [it.title, it.description, f?.name ?? '', ...it.tags, ...(it.kind === 'essay' ? it.contents : it.nb.days.map(d => d.title))].join(' ').toLowerCase();
+        return (
+          <li class={`row ${it.kind}`} id={keyOf(it)} data-key={keyOf(it)} data-f={f?.id ?? ''} data-text={text}>
+            <a class="row-link" href={it.href}>
+              <span class="row-no"><b>{numOf(it)}</b><i>{it.date.slice(0, 4)}</i></span>
+              <span class="row-print" aria-hidden="true"><img src={it.image} srcset={widths(it.src, [480, 720, 960])} sizes="(max-width: 760px) calc(100vw - 2.5rem), 22vw" alt="" width="1600" height="840" loading="lazy" decoding="async" /></span>
+              <span class="row-main">
+                <span class="row-title">{it.title}</span>
+                <span class="row-desc">{it.description}</span>
+              </span>
+              <span class="row-meta">
+                <span class="row-kind">{it.kind === 'essay' ? 'Essay' : 'Notebook'}{it.kind === 'notebook' && it.nb.inProgress && <em> · live</em>}</span>
+                <span>{it.kind === 'essay' ? `${it.minutes} min` : `${it.nb.days.length} days · ${it.minutes} min`}</span>
+                <span>{k1(wordsOf(it))} words</span>
+                <span class="row-field">{f?.name}</span>
+              </span>
+            </a>
+            {it.kind === 'notebook' && (
+              <ol class="row-days" aria-label={`Days of ${it.title}`}>
+                {it.nb.days.map(d => <li>{d.href
+                  ? <a href={d.href} title={d.title}>{String(d.day).padStart(2, '0')}</a>
+                  : <span title="Not written yet">{String(d.day).padStart(2, '0')}</span>}</li>)}
+              </ol>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+    <p class="ix-none" id="ix-none" hidden>Nothing written on that yet. <button type="button" id="ix-reset">Show everything</button></p>
+
+    <details class="why ix-why">
+      <summary>Why I write these</summary>
+      <div class="why-body">
+        <p>I write these to check whether I actually understand something. If I can explain it from the start, with the reasoning and not just the result, I do. If I can't, the gap shows up on the page.</p>
+        <p>I'm mostly self-taught, so I don't always know what I'm missing. Writing is how I find out.</p>
+        <p>I move between subjects because that's how my curiosity works, and because an idea often makes more sense once I've seen it somewhere else.</p>
+        <p>These are working notes, not tutorials. Some of it will be wrong. Where I'm not sure, I say so.</p>
+      </div>
+    </details>
   </div>
+
 </Layout>
 
 <style>
-  /* The page takes the whole width of the window, with its own margins. */
-  :global(body) { overflow-x: clip; }
-  .bp {
-    --ease: cubic-bezier(0.22, 0.8, 0.2, 1);
-    --side: var(--axis);
-    box-sizing: border-box;
-    /* The whole width of the window, its contents on the site's axis. */
-    width: auto;
-    max-width: none;
+  /* ════════════════════════════════════════════════════════════════
+     The Index.
+     Not a list of cards: a table of contents for everything written,
+     set the way a type specimen is. The mast ("Technical Blogs"), whose
+     last word is the search: type, and your word takes its place. Under
+     it a wall made of every
+     section and every day. Then one enormous title to a row; the rows
+     you are not pointing at go hollow, and the piece's print follows
+     the pointer like a proof pulled from the press.
+     ════════════════════════════════════════════════════════════════ */
+  .ix {
     margin-inline: calc(-1 * var(--axis));
     padding-inline: var(--axis);
+    max-width: none;
   }
 
-
-  /* ── Opening ── */
-  .open {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: end;
-    min-height: calc(100svh - var(--head-h, 72px) - 3rem);
-    padding-bottom: var(--space-lg);
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
-  .op-art {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: stretch;
-    position: relative;
-    /* The picture forms inside the page: below the header, within the
-       margins, over the opening's full height. (The ink itself is free to
-       move across the screen on its way there.) */
-    min-height: max(26rem, calc(100svh - var(--head-h, 72px) - 3rem - var(--space-lg)));
-  }
-  .op-art .plate-slot { display: none; position: absolute; inset: 0; }
-  .op-art .plate-slot.on { display: block; }
-
-  .op-text { grid-column: 1; grid-row: 1; position: relative; z-index: 2; }
-
-  /* The title is the shared mast (global .mast-title). */
-  .op-title { white-space: nowrap; }
-
-  .op-say {
-    max-width: 38ch;
-    margin: clamp(1rem, 3vh, 1.75rem) 0 0;
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: var(--fs-lead);
-    line-height: var(--lh-snug);
-    color: var(--color-text-secondary);
-  }
-
-  /* The four topics: an index, one to a line, on one left edge; the
-     numeral in its own column, the count trailing the name. */
-  .op-index {
+  /* ── The opening ── */
+  .ix-open {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
-    margin: clamp(1.75rem, 5vh, 3rem) 0 0;
+    padding-bottom: var(--space-xl);
   }
-  .op-index a {
-    display: grid;
-    grid-template-columns: 2.6rem auto 1fr;
-    align-items: baseline;
-    column-gap: 0.55rem;
-    color: var(--color-text);
-    text-decoration: none;
-  }
-  .oi-n, .oi-c {
-    font-family: var(--font-mono);
-    font-size: var(--fs-micro);
-    letter-spacing: var(--track-label);
-    color: var(--color-accent);
-  }
-  .oi-c { color: var(--color-text-muted); }
-  .oi-name {
-    font-family: var(--font-display);
-    font-size: clamp(1.4rem, 1.8vw, 1.9rem);
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    transition: color 300ms ease, transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .op-index a:hover .oi-name, .op-index a:focus-visible .oi-name { color: var(--color-accent); transform: translateX(0.15em); }
 
-  /* One line to close the column: the search across, the note at its end. */
-  .op-find {
+  /* A strip of measurements across the frame, like the edge of a proof. */
+  .ix-strip {
     display: flex;
-    align-items: baseline;
-    gap: var(--space-lg);
-    max-width: 34rem;
-    margin-top: clamp(1.75rem, 5vh, 3rem);
-  }
-  .find { display: flex; flex: 1; min-width: 0; align-items: baseline; gap: var(--space-3); }
-  .find-k, .why summary {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-lg);
+    margin: 0;
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-text);
     font-family: var(--font-mono);
-    font-size: var(--fs-micro);
+    font-size: var(--fs-label);
+    letter-spacing: var(--track-caps);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .ix-strip b { font-weight: var(--fw-medium); color: var(--color-accent); }
+
+  /* The sentence, finished by the reader: the search is its last word. */
+  .ix-title {
+    margin: var(--space-xl) 0 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-display-xl);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-mast);
+    letter-spacing: var(--track-mast);
+    color: var(--color-text);
+  }
+  .ix-title-a { display: block; margin-left: -0.04em; text-wrap: balance; }
+
+  .ix-ask {
+    position: relative;
+    display: block;
+    margin-top: 0.04em;
+  }
+  .ix-ask input {
+    display: block;
+    width: 100%;
+    padding: 0 1.2em 0.08em 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: none;
+    font: inherit;
+    font-style: italic;
+    font-weight: var(--fw-light);
+    letter-spacing: var(--track-tight);
+    color: var(--color-accent);
+    caret-color: var(--color-accent);
+    outline: none;
+    transition: border-color var(--dur-base) ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .ix-ask input::placeholder { color: var(--color-accent); opacity: 1; }
+  .ix-ask input:focus::placeholder { opacity: 0.25; }
+  .ix-ask input:focus { border-bottom-color: var(--color-accent); }
+  .ix-ask input::-webkit-search-cancel-button { display: none; }
+  .ix-key {
+    position: absolute;
+    right: 0;
+    bottom: 0.35em;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-style: normal;
+    letter-spacing: var(--track-caps);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+  .ix-key kbd {
+    margin-right: var(--space-1);
+    padding: var(--space-0-5) var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    color: var(--color-text);
+  }
+  .ix-ask:focus-within .ix-key { opacity: 0; }
+
+  /* The wall: every section heading and every notebook day, run together
+     as one justified passage. Searching lights the phrases that match and
+     lets the rest sink into the paper; pointing at one shows the shape of
+     the piece it belongs to. */
+  .ix-wall {
+    position: relative;
+    margin: var(--space-xl) 0 0;
+    max-height: 9.6em;
+    overflow: hidden;
+    font-family: var(--font-serif);
+    font-size: var(--fs-lead);
+    line-height: var(--lh-ui);
+    text-align: justify;
+    hyphens: auto;
+    color: var(--color-text-secondary);
+    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent);
+    mask-image: linear-gradient(180deg, #000 55%, transparent);
+  }
+  .ix-wall.open {
+    max-height: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .ix-wall a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--dur-fast) ease, opacity var(--dur-fast) ease;
+  }
+  .ix-wall a:hover { color: var(--color-accent); }
+  .ix-wall .sl { color: var(--color-accent); opacity: 0.55; }
+  .ix-wall.pointing a:not(.hot), .ix-wall.searching a:not(.hit), .ix-wall a.off { opacity: 0.18; }
+  .ix-wall a.hot { color: var(--color-text); }
+  .ix-wall a.hit { color: var(--color-accent); font-style: italic; }
+
+  .ix-wall-more {
+    align-self: flex-start;
+    margin-top: var(--space-3);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
     letter-spacing: var(--track-caps);
     text-transform: uppercase;
     color: var(--color-accent);
   }
-  .find input {
-    flex: 1;
-    min-width: 0;
-    padding: 0.2em 0;
+  .ix-wall-more::before { content: '+ '; }
+  .ix-wall-more[aria-expanded='true']::before { content: '− '; }
+
+  /* ── The switches ── */
+  .ix-bar {
+    position: sticky;
+    top: var(--head-h, 4.5rem);
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-6);
+    margin: 0 calc(-1 * var(--axis));
+    padding: var(--space-3) var(--axis);
+    background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .ix-bar button {
+    padding: 0;
     border: 0;
-    border-bottom: 1px solid var(--color-border, rgba(0,0,0,0.15));
     background: none;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: var(--fs-lead);
+    font-weight: var(--fw-light);
+    color: var(--color-text-secondary);
+    transition: color var(--dur-fast) ease;
+  }
+  .ix-bar button:hover { color: var(--color-text); }
+  .ix-bar button.on { font-style: italic; color: var(--color-accent); }
+  .ix-bar sup {
+    margin-left: var(--space-0-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-style: normal;
+    color: var(--color-accent);
+  }
+  .ix-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: var(--track-caps);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* ── The table ── */
+  .ix-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .row {
+    border-bottom: 1px solid var(--color-text);
+  }
+  .row[hidden] { display: none; }
+  .row-link {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr) clamp(11rem, 19vw, 24rem) 11rem;
+    grid-template-areas: 'no main print meta';
+    column-gap: var(--space-lg);
+    align-items: start;
+    padding: clamp(1.4rem, 3.4vw, 2.6rem) 0;
+    color: inherit;
+    text-decoration: none;
+  }
+  .row-link:hover { text-decoration: none; }
+
+  .row-no {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-top: 0.9em;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: var(--track-caps);
+  }
+  .row-no b { font-weight: var(--fw-medium); color: var(--color-accent); }
+  .row-no i { font-style: normal; color: var(--color-text-muted); }
+
+  .row-no { grid-area: no; }
+  .row-main { grid-area: main; display: block; min-width: 0; }
+  .row-meta { grid-area: meta; }
+
+  /* Each piece's print, laid on the page a little askew, the way proofs
+     lie on a table. Reached for, it straightens and lifts. */
+  .row-print {
+    grid-area: print;
+    display: block;
+    padding: var(--space-1);
+    background: var(--color-raised);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-soft);
+    transform: rotate(var(--tilt, -1.5deg));
+    transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
+  }
+  .row:nth-child(even) .row-print { --tilt: 1.5deg; }
+  .row:nth-child(3n) .row-print { --tilt: -0.6deg; }
+  .row-print img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1600 / 840;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+  .row-link:hover .row-print,
+  .row-link:focus-visible .row-print {
+    transform: rotate(0deg) translateY(calc(-1 * var(--space-1-5)));
+    box-shadow: var(--shadow-lift);
+  }
+
+  .row-title {
+    display: block;
+    margin-left: -0.04em;
+    font-family: var(--font-display);
+    font-size: var(--fs-index);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-display);
+    letter-spacing: var(--track-mast);
+    text-wrap: balance;
+    color: var(--color-text);
+    -webkit-text-stroke: 1px transparent;
+    transition: color var(--dur-base) ease, -webkit-text-stroke-color var(--dur-base) ease, transform var(--dur-slow) var(--ease-out);
+  }
+  .row-desc {
+    display: block;
+    max-width: 58ch;
+    margin-top: var(--space-4);
     font-family: var(--font-serif);
     font-style: italic;
     font-size: var(--fs-ui);
-    color: var(--color-text);
-    outline: none;
-    transition: border-color 300ms ease;
-  }
-  .find input:focus { border-bottom-color: var(--color-accent); }
-  .find input::-webkit-search-cancel-button { display: none; }
-
-  .why { flex: none; }
-  .bp .why summary {
-    cursor: pointer;
-    list-style: none;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    color: var(--color-text-muted);
-    transition: color 250ms ease;
-  }
-  .why summary::-webkit-details-marker { display: none; }
-  .bp .why summary:hover, .bp .why[open] summary { color: var(--color-accent); }
-  .why-body {
-    position: absolute;
-    z-index: 6;
-    max-width: 34rem;
-    margin-top: var(--space-3);
-    padding: var(--space-md) 0;
-    background: var(--color-bg);
-    font-family: var(--font-serif);
-    line-height: 1.55;
+    line-height: var(--lh-ui);
     color: var(--color-text-secondary);
   }
-  .why-body p { margin: 0 0 0.7em; }
 
-  /* ── The atlas ──
-     Each field is a plate: its number and name,
-     a short note; then its works as figures, equal, sharing the full width.
-     Every figure's caption parts sit on the same lines across the plate. */
-  /* A new topic begins at a hairline across the page, drawn outward from
-     the middle as the topic's name sets itself. */
-  .plate-sec, .none { max-width: 1560px; margin-inline: auto; }
-  .plate-sec {
-    position: relative;
-    margin-top: clamp(3.5rem, 9vh, 6rem);
-    padding: 0;
-    scroll-margin-top: calc(var(--head-h, 72px) + 0.5rem);
-  }
-
-  /* The field's heading: an interlude between groups of works, not one of
-     them. Centred where the works sit on their grid; the name large but
-     quiet, the intro small; there to orient, not to be read each time. */
-  /* Each topic opens like a chapter: its name set enormous across the
-     frame as an outline, the hairline of an engraver's proof, so it is
-     the biggest thing on the screen and still lighter than the work
-     beneath it. Hovered, the outline fills with ink. */
-  .pl-head {
-    margin: clamp(2rem, 8vh, 5rem) 0 clamp(2rem, 6vh, 3.5rem);
-    padding-top: var(--space-lg);
-    border-top: 1px solid var(--color-text);
-  }
-  .pl-k {
-    margin: var(--space-3) 0 0;
-    font-family: var(--font-mono);
-    font-size: var(--fs-micro);
-    letter-spacing: var(--track-caps);
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-  }
-  .pl-k span { margin-right: 1.2em; color: var(--color-accent); }
-  .pl-name {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: start;
-    column-gap: var(--space-lg);
-    margin: 0;
-    color: var(--color-text);
-  }
-  /* The chapter's number and count, small, hung beside the giant word. */
-  .pl-num {
+  .row-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
     padding-top: 0.9em;
     font-family: var(--font-mono);
     font-size: var(--fs-label);
     letter-spacing: var(--track-caps);
     text-transform: uppercase;
+    text-align: right;
     color: var(--color-text-muted);
-    white-space: nowrap;
   }
-  .pl-num span { color: var(--color-accent); }
-  @media (max-width: 760px) {
-    .pl-name { grid-template-columns: 1fr; row-gap: var(--space-2); }
-    .pl-num { padding-top: 0; }
+  .row-kind { color: var(--color-text); }
+  .row-kind em { font-style: normal; color: var(--color-accent); }
+  .row-field { color: var(--color-accent); }
+
+  /* A notebook's days, as a strip of numbered frames. */
+  .row-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1-5);
+    list-style: none;
+    margin: calc(-1 * var(--space-3)) 0 0;
+    padding: 0 0 clamp(1.4rem, 3.4vw, 2.6rem) calc(6.5rem + var(--space-lg));
   }
-
-  .pl-intro {
-    margin: var(--space-3) 0 0;
-    max-width: 64ch;
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: var(--fs-small);
-    line-height: 1.6;
-    color: var(--color-text-secondary);
-    text-wrap: balance;
-  }
-
-
-  /* Arriving at a field: the name sets itself letter by letter, each
-     rising from below the line a moment after the last, masked at the
-     line so nothing fades; the plate line and the note settle after it.
-     Plays each time the heading comes into view (the script marks it). */
-
-
-  /* The topic's intro, folded behind a small control: there when wanted,
-     no room taken when not. */
-  /* The name is the way into the topic's scope: a small mark beside it in
-     the divider, turning to a cross when the note is open. */
-  .pl-name { cursor: pointer; list-style: none; }
-  .pl-name::-webkit-details-marker { display: none; }
-  .pl-name h2 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: var(--fw-display);
-    font-size: clamp(3.2rem, 10vw, 10rem);
-    line-height: var(--lh-mast);
-    letter-spacing: var(--track-mast);
-    text-wrap: balance;
-    /* An outline, not a fill: enormous and still quiet. */
-    color: transparent;
-    -webkit-text-stroke: 1px var(--color-text);
-    transition: color var(--dur-slow) var(--ease-out);
-  }
-  .pl-name:hover h2, .pl-about[open] .pl-name h2 { color: var(--color-text); }
-  .pl-plus {
-    display: inline-block;
-    margin-left: 0.15em;
-    font-family: var(--font-mono);
-    font-size: 0.3em;
-    vertical-align: 1.6em;
-    -webkit-text-stroke: 0;
-    color: var(--color-accent);
-    transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .pl-name:hover .pl-plus { transform: rotate(90deg); }
-  .pl-about[open] .pl-plus { transform: rotate(45deg); }
-  .pl-name:focus-visible { outline: none; }
-  .pl-name:focus-visible h2 { text-decoration: underline; text-underline-offset: 0.2em; }
-  .pl-about .pl-intro { margin-top: var(--space-md); }
-  .pl-about[open] .pl-intro { animation: about-open 600ms cubic-bezier(0.16, 1, 0.3, 1); }
-  @keyframes about-open { from { transform: translateY(-6px); } to { transform: none; } }
-
-  /* One work to a row, every one given the same room: the figure wide on
-     the left, its number, title and note beside it; all
-     its days or sections underneath, in columns. */
-  .figs { display: flex; flex-direction: column; gap: clamp(3.5rem, 11vh, 7rem); }
-  .fig {
+  .row-days a, .row-days span {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto auto auto 1fr;
-    grid-template-areas: 'img k' 'img title' 'img desc' 'img toc';
-    column-gap: clamp(2rem, 4.5vw, 5rem);
-    align-items: start;
-    margin: 0;
-    min-width: 0;
-  }
-  .cap { display: contents; }
-  .fig-img { grid-area: img; align-self: start; }
-  .cap-k { grid-area: k; }
-  .cap-title { grid-area: title; }
-  .cap-desc { grid-area: desc; }
-  .cap-toc { grid-area: toc; }
-
-  .fig-img { position: relative; display: block; }
-  .fig-img img {
-    display: block;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1600 / 840;
-    object-fit: contain;
-    transition: transform 1.1s var(--ease);
-  }
-  .fig:hover .fig-img img { transform: scale(1.02); }
-
-  .cap-k {
-    margin: 0 0 var(--space-md);
-    line-height: 1;
+    place-items: center;
+    min-width: 2.4rem;
+    height: 2.4rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
     font-family: var(--font-mono);
     font-size: var(--fs-label);
-    letter-spacing: var(--track-caps);
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-  }
-  .cap-n { margin-right: 1em; color: var(--color-accent); }
-  .cap-k em { font-style: normal; color: var(--color-accent); }
-
-  .cap-title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: var(--fw-display);
-    font-size: clamp(1.9rem, 2.6vw, 2.8rem);
-    max-width: 24ch;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    text-wrap: balance;
-  }
-  .cap-title a { color: var(--color-accent); text-decoration: none; transition: color 250ms ease; }
-  .cap-title a:hover, .cap-title a:focus-visible { color: var(--color-text); }
-
-  .cap-desc {
-    margin: var(--space-3) 0 0;
-    max-width: 52ch;
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: var(--fs-ui);
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-  }
-
-  /* Every day of a notebook and every section of an essay, in full: the
-     parts are what the work is made of. */
-  .cap-toc {
-    align-self: start;
-    list-style: none;
-    margin: clamp(1.25rem, 3vh, 2rem) 0 0;
-    padding: 0;
-    max-width: 44rem;
-  }
-  .cap-toc li { break-inside: avoid; }
-  .cap-toc a, .cap-toc .a {
-    display: grid;
-    grid-template-columns: 2.4rem minmax(0, 1fr) 1.4rem;
-    align-items: baseline;
-    padding: 0.4rem 0;
-    cursor: pointer;
     color: var(--color-text);
     text-decoration: none;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
   }
-  .cap-toc i {
-    font-style: normal;
-    font-family: var(--font-serif);
-    font-size: var(--fs-body);
-    font-variant-numeric: tabular-nums lining-nums;
-    line-height: 1.35;
-    color: var(--color-accent);
+  .row-days a:hover { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); text-decoration: none; }
+  .row-days span { border-style: dashed; color: var(--color-text-muted); }
+
+  /* Pointing: every other title goes hollow, the one reached for steps
+     forward. */
+  @media (hover: hover) and (min-width: 761px) {
+    .ix-list:has(.row-link:hover) .row:not(:has(.row-link:hover)) .row-title {
+      color: transparent;
+      -webkit-text-stroke-color: color-mix(in srgb, var(--color-text) 40%, transparent);
+    }
+    .row-link:hover .row-title { transform: translateX(0.18em); }
+    .row-link:hover .row-no b { color: var(--color-text); }
   }
-  .cap-toc .t {
-    font-family: var(--font-serif);
-    color: var(--color-text);
-    font-size: var(--fs-body);
-    line-height: 1.35;
-    text-wrap: pretty;
-    transition: color 200ms ease;
+
+  .ix-none {
+    margin: var(--space-2xl) 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: var(--fw-light);
+    font-style: italic;
+    color: var(--color-text-secondary);
   }
-  .cap-toc .m {
+  .ix-none button {
+    margin-left: var(--space-3);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
     font-family: var(--font-mono);
-    font-size: var(--fs-micro);
-    letter-spacing: var(--track-label);
-    color: var(--color-text-muted);
-    white-space: nowrap;
-  }
-  .cap-toc .m::before { content: '\00a0\00a0'; }
-  /* Each part is a way in: on pointing, it moves toward you and an arrow
-     comes up beside it. */
-  .cap-toc a::after {
-    content: '\2192';
-    align-self: baseline;
-    justify-self: end;
-    font-family: var(--font-serif);
+    font-size: var(--fs-label);
+    font-style: normal;
+    letter-spacing: var(--track-caps);
+    text-transform: uppercase;
     color: var(--color-accent);
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: opacity 250ms ease, transform 400ms var(--ease);
   }
-  .cap-toc a:hover::after, .cap-toc a:focus-visible::after { opacity: 1; transform: none; }
-  .cap-toc .t { transition: color 200ms ease, transform 400ms var(--ease); }
-  .cap-toc a:hover .t, .cap-toc a:focus-visible .t { color: var(--color-accent); transform: translateX(3px); }
-  .cap-toc a:hover i { color: var(--color-accent); }
-  .cap-toc a:focus-visible { outline: none; }
-  .cap-toc a:hover .m { color: var(--color-text-muted); }
-  .cap-toc .later { opacity: 0.45; }
-  .toc-more { display: none; }
 
-  /* Finding: what does not match steps out; a plate keeps its columns
-     to the figures left on it. */
-  .fig.miss, .plate-sec.miss { display: none; }
-  .bp.searching .pl-about { display: none; }
-  .none { padding: var(--space-xl) 0; font-family: var(--font-serif); font-style: italic; color: var(--color-text-muted); }
+  .ix-why { margin-top: var(--space-2xl); }
 
 
+  /* ── Tablets: the measurements move under the title ── */
+  @media (min-width: 761px) and (max-width: 1100px) {
+    .row-link {
+      grid-template-columns: 4.5rem minmax(0, 1fr) clamp(10rem, 26vw, 16rem);
+      grid-template-areas: 'no main print' '. meta print';
+    }
+    .row-meta {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: var(--space-1) var(--space-4);
+      padding-top: var(--space-4);
+      text-align: left;
+    }
+    .row-days { padding-left: calc(4.5rem + var(--space-lg)); }
+  }
 
   /* ── Phones ── */
-  @media (max-width: 900px) {
-    .open { display: flex; flex-direction: column; align-items: stretch; min-height: 0; padding-top: var(--space-md); }
-    .op-art { order: 2; min-height: 0; height: 40svh; margin: var(--space-md) 0; }
-    .op-art .plate-slot { inset: 0; }
-    .op-text { display: contents; }
-    .op-title { order: 1; }
-    .op-say { order: 3; margin-top: 0; }
-    .op-index { order: 4; margin-top: var(--space-xl); }
-    .op-index a { grid-template-columns: 2.2rem auto 1fr; }
-    .oi-name { font-size: 1.75rem; }
-    .op-find { order: 5; max-width: none; margin-top: var(--space-xl); flex-direction: column; align-items: stretch; gap: var(--space-md); }
-    .why-body { left: var(--gutter, 1rem); right: var(--gutter, 1rem); }
+  @media (max-width: 760px) {
+    .ix-open { padding-bottom: var(--space-lg); }
+    .ix-strip { justify-content: flex-start; }
+    .ix-title { margin-top: var(--space-xl); }
+    .ix-wall { margin-top: var(--space-lg); font-size: var(--fs-ui); max-height: 12em; text-align: left; }
 
-    .figs { gap: var(--space-2xl); }
-    .fig { display: block; }
-    .cap { display: block; }
-    .cap-k { margin-top: var(--space-md); }
-    .cap-title { font-size: clamp(1.75rem, 8.4vw, 2.15rem); }
-    .cap-k { line-height: 1.5; }
-    .cap-toc { margin-top: var(--space-md); }
-    .cap-toc .t, .cap-toc i { font-size: var(--fs-ui); }
-    /* On a phone a work shows its first three parts; the rest on asking. */
-    .fig:not(.open) .cap-toc li:nth-child(n + 4) { display: none; }
-    .toc-more {
-      display: inline-block;
-      margin-top: var(--space-3);
-      padding: 0.3rem 0;
-      border: 0;
-      background: none;
-      font-family: var(--font-mono);
-      font-size: var(--fs-micro);
-      letter-spacing: var(--track-caps);
-      text-transform: uppercase;
-      color: var(--color-accent);
-      cursor: pointer;
+    .ix-bar {
+      gap: var(--space-1) var(--space-4);
+      padding-block: var(--space-2);
     }
-    .fig.open .toc-more { display: none; }
-    .cap-toc a, .cap-toc .a { grid-template-columns: 2.1rem minmax(0, 1fr) 1.1rem; padding: 0.35rem 0; }
-    .fig-img { margin-bottom: var(--space-md); }
-    .figs { gap: var(--space-2xl); }
+    .ix-bar button { font-size: var(--fs-ui); }
+    .ix-count { flex-basis: 100%; margin-left: 0; }
+
+    .row-link {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'no' 'print' 'main' 'meta';
+      row-gap: var(--space-3);
+      padding: var(--space-xl) 0;
+    }
+    .row-no { flex-direction: row; gap: var(--space-3); padding-top: 0; }
+    .row-meta {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: var(--space-1) var(--space-4);
+      padding-top: 0;
+      text-align: left;
+    }
+
+    .row-print { margin-bottom: var(--space-1); }
+
+    .row-days { margin-top: 0; padding-left: 0; padding-bottom: var(--space-xl); }
   }
 </style>
 
 <script is:inline>
 (function () {
-  var bp = document.getElementById('bp');
-  if (!bp) return;
-  var plate = document.querySelector('.plate');
-  var slots = [].slice.call(bp.querySelectorAll('.op-art .plate-slot'));
-  var secs = [].slice.call(bp.querySelectorAll('.plate-sec'));
-  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var head = function () { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--head-h')) || 72; };
-  function go(el) { scrollTo({ top: el.getBoundingClientRect().top + scrollY - head() - 8, behavior: reduce ? 'auto' : 'smooth' }); }
+  var ix = document.getElementById('ix');
+  if (!ix) return;
+  var q = document.getElementById('ix-q');
+  var wall = document.getElementById('ix-wall');
+  var more = document.getElementById('ix-wall-more');
+  var rows = [].slice.call(ix.querySelectorAll('.row'));
+  var phrases = [].slice.call(wall.querySelectorAll('a'));
+  var bar = [].slice.call(ix.querySelectorAll('.ix-bar button'));
+  var count = document.getElementById('ix-count');
+  var none = document.getElementById('ix-none');
+  var field = '';
 
-  // Pointing at a field in the opening turns the ink to its plates.
-  var shown = 'all', dwell = 0;
-  function drawing(id) {
-    if (id === shown) return;
-    shown = id;
-    var el = null;
-    slots.forEach(function (s) { var on = s.dataset.t === id; s.classList.toggle('on', on); if (on) el = s; });
-    if (plate && el) requestAnimationFrame(function () { plate.dispatchEvent(new CustomEvent('plate:slot', { detail: el })); });
+  function openWall(open) {
+    wall.classList.toggle('open', open);
+    more.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
-  bp.querySelectorAll('.op-index a').forEach(function (a) {
-    a.addEventListener('mouseenter', function () { clearTimeout(dwell); dwell = setTimeout(function () { drawing(a.dataset.t); }, 300); });
-    a.addEventListener('mouseleave', function () { clearTimeout(dwell); });
-    a.addEventListener('focus', function () { drawing(a.dataset.t); });
-    // A field chosen in the opening: its plate, clear of the header.
-    a.addEventListener('click', function (e) {
-      var el = document.getElementById(a.dataset.t); if (!el) return;
-      e.preventDefault(); go(el);
-      history.replaceState(null, '', '#' + a.dataset.t);
+  more.addEventListener('click', function () { openWall(!wall.classList.contains('open')); });
+
+  function apply() {
+    var term = q.value.trim().toLowerCase();
+    var words = term.split(/\s+/).filter(Boolean);
+    var shown = 0;
+    rows.forEach(function (r) {
+      var ok = (!field || r.dataset.f === field) && words.every(function (w) { return r.dataset.text.indexOf(w) !== -1; });
+      r.hidden = !ok;
+      if (ok) shown++;
+    });
+    wall.classList.toggle('searching', words.length > 0);
+    phrases.forEach(function (a) {
+      var t = a.textContent.toLowerCase();
+      a.classList.toggle('hit', words.length > 0 && words.every(function (w) { return t.indexOf(w) !== -1; }));
+      a.classList.toggle('off', !!field && a.dataset.f !== field);
+    });
+    if (words.length) openWall(true);
+    none.hidden = shown > 0;
+    count.textContent = (words.length || field) ? shown + ' of ' + rows.length : '';
+  }
+
+  q.addEventListener('input', apply);
+  bar.forEach(function (b) {
+    b.addEventListener('click', function () {
+      field = b.dataset.f;
+      bar.forEach(function (x) { x.classList.toggle('on', x === b); });
+      apply();
     });
   });
-
-  // Field headings gather as they come into view, and loosen again once
-  // they have left it, so they play each time.
-  if ('IntersectionObserver' in window && !reduce) {
-    bp.classList.add('moving');
-    // Set once well into view; reset only when wholly out of it, so the
-    // reset is never seen.
-    var hin = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (e.isIntersecting) e.target.classList.add('in'); });
-    }, { rootMargin: '0px 0px -18% 0px', threshold: 0.3 });
-    var hout = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (!e.isIntersecting) e.target.classList.remove('in'); });
-    }, { threshold: 0 });
-    bp.querySelectorAll('.pl-head').forEach(function (h) { hin.observe(h); hout.observe(h); });
-  }
-
-  bp.querySelectorAll('.toc-more').forEach(function (b) {
-    b.addEventListener('click', function () { b.closest('.fig').classList.add('open'); b.setAttribute('aria-expanded', 'true'); });
-  });
-
-  // Find: across all four plates; what does not match steps out, and each
-  // plate shares its width among the figures left on it.
-  var q = document.getElementById('find'), none = document.getElementById('none');
-  function run() {
-    var v = q.value.trim().toLowerCase(), any = false;
-    bp.classList.toggle('searching', !!v);
-    secs.forEach(function (s) {
-      var hit = 0, figs = s.querySelectorAll('.fig');
-      figs.forEach(function (f) {
-        var m = !v || f.dataset.text.indexOf(v) >= 0;
-        f.classList.toggle('miss', !m); if (m) hit++;
-      });
-      s.classList.toggle('miss', !!v && !hit);
-      s.style.setProperty('--n', Math.max(1, v ? hit : figs.length));
-      if (hit) any = true;
-    });
-    none.hidden = !v || any;
-  }
-  q.addEventListener('input', run);
-  q.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { q.value = ''; run(); q.blur(); }
-    if (e.key === 'Enter') { var f = bp.querySelector('.plate-sec:not(.miss)'); if (f) { e.preventDefault(); go(f); } }
+  document.getElementById('ix-reset').addEventListener('click', function () {
+    q.value = ''; field = '';
+    bar.forEach(function (x, i) { x.classList.toggle('on', i === 0); });
+    apply();
   });
   addEventListener('keydown', function (e) {
-    var t = document.activeElement;
-    if (e.key === '/' && t !== q && !/INPUT|TEXTAREA|SELECT/.test(t.tagName) && !t.isContentEditable) { e.preventDefault(); q.focus(); }
+    if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); q.focus(); }
+    if (e.key === 'Escape' && document.activeElement === q) { q.value = ''; apply(); q.blur(); }
   });
-  // Coming back with a search still in the box (the browser keeps it).
-  if (q.value) run();
+
+  // Pointing at a phrase shows every phrase of the same piece.
+  wall.addEventListener('pointerover', function (e) {
+    var a = e.target.closest('a');
+    if (!a) return;
+    wall.classList.add('pointing');
+    phrases.forEach(function (p) { p.classList.toggle('hot', p.dataset.key === a.dataset.key); });
+  });
+  wall.addEventListener('pointerleave', function () {
+    wall.classList.remove('pointing');
+    phrases.forEach(function (p) { p.classList.remove('hot'); });
+  });
+
 })();
 </script>
