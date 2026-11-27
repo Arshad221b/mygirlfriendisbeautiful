@@ -37,7 +37,7 @@ for (const st of day.steps) {
 const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 ---
 
-<Layout title={title} activeNav="/blog" description={`Day ${day.day}: ${day.curiosityTitle}`} ogImage={share("/images/blog/notebook-3d-reconstruction.jpg")}>
+<Layout title={title} activeNav="/blog" description={`Day ${day.day}: ${day.curiosityTitle}. ${day.summary ?? ""}`} published={day.date} ogImage={share("/images/blog/notebook-3d-reconstruction.jpg")}>
   <div class="experiment-page recon">
     <a href="/notebooks/3d-reconstruction" class="back-link">&larr; All Days</a>
 

@@ -54,7 +54,7 @@ function formatDate(dateStr: string): string {
 }
 ---
 
-<Layout title={`${title} — Arshad Kazi`} activeNav="/thoughts" description={description} ogImage={shareImage}>
+<Layout title={`${title} — Arshad Kazi`} published={date} activeNav="/thoughts" description={description} ogImage={shareImage}>
   <script type="application/ld+json" slot="head" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Article",

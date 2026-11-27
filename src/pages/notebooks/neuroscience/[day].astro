@@ -27,7 +27,7 @@ const prevDay = currentIndex > 0 ? activeDays[currentIndex - 1] : null;
 const nextDay = currentIndex < activeDays.length - 1 ? activeDays[currentIndex + 1] : null;
 ---
 
-<Layout title={title} activeNav="/blog" description={`Day ${day.day}: ${day.curiosityTitle}`} ogImage={share("/images/blog/notebook-neuroscience.jpg")}>
+<Layout title={title} activeNav="/blog" description={`Day ${day.day}: ${day.curiosityTitle}. ${day.summary ?? ""}`} published={day.date} ogImage={share("/images/blog/notebook-neuroscience.jpg")}>
   <div class="experiment-page">
     <a href="/notebooks/neuroscience" class="back-link">&larr; All Days</a>
 

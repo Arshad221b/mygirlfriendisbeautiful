@@ -6,18 +6,52 @@ interface Props {
   activeNav?: string;
   description?: string;
   ogImage?: string;
+  /** An article (a post, an essay, a notebook day): its date, for search and previews. */
+  published?: string;
 }
 
-const { title, activeNav = '', description = '', ogImage = '' } = Astro.props;
+const { title, activeNav = '', description = '', ogImage = '', published = '' } = Astro.props;
 const siteUrl = 'https://arshad-kazi.com';
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
 const defaultDescription = 'Arshad Kazi — CV/ML engineer building things to understand how they work. Computer vision, 3D geometry, representation learning.';
-const metaDescription = description || defaultDescription;
 /* An ogImage may be a path on this site or a full URL somewhere else, so
    only the local ones get the site prefixed onto them. */
 const metaImage = ogImage
   ? (ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`)
   : share('/images/share-about.jpg');
+// Search results show about 60 characters of a title and 155 of a
+// description: a long title drops the site's name, a long description is
+// cut at a word, and markup or maths never reaches either.
+const plain = (t: string) => t.replace(/<[^>]*>/g, '').replace(/\$+/g, '').replace(/\\[a-zA-Z]+/g, '').replace(/\s+/g, ' ').trim();
+let pageTitle = title;
+while (pageTitle.length > 62 && /\s+[—|]\s+[^—|]+$/.test(pageTitle)) pageTitle = pageTitle.replace(/\s+[—|]\s+[^—|]+$/, '');
+const cut = (t: string) => t.length <= 160 ? t : t.slice(0, 157).replace(/\s+\S*$/, '') + '…';
+const metaDescription = cut(plain(description) || defaultDescription);
+const isHome = Astro.url.pathname === '/';
+// Where the page sits, for search engines' breadcrumbs.
+const sections: Record<string, string> = { blog: 'Blogs', notebooks: 'Blogs', thoughts: 'Thoughts', contact: 'Contact', rss: 'RSS' };
+const seg = Astro.url.pathname.split('/').filter(Boolean);
+const crumbs = [{ name: 'Arshad Kazi', item: `${siteUrl}/` }];
+if (seg.length) {
+  const sec = sections[seg[0]];
+  if (sec) crumbs.push({ name: sec, item: `${siteUrl}/${seg[0] === 'notebooks' ? 'blog' : seg[0]}/` });
+  if (seg.length > 1 || !sec) crumbs.push({ name: pageTitle.replace(/\s+[—|].*$/, ''), item: canonicalUrl });
+}
+const structured: object[] = [];
+if (isHome) structured.push({
+  '@context': 'https://schema.org', '@type': 'WebSite', name: 'Journey of Curiosity', alternateName: 'Arshad Kazi',
+  url: `${siteUrl}/`, description: defaultDescription, author: { '@type': 'Person', name: 'Arshad Kazi', url: `${siteUrl}/` }
+});
+// Notebook days are articles too (posts and essays describe themselves).
+if (published && seg[0] === 'notebooks') structured.push({
+  '@context': 'https://schema.org', '@type': 'Article', headline: pageTitle.replace(/\s+[—|].*$/, ''),
+  description: metaDescription, datePublished: published, image: metaImage, mainEntityOfPage: canonicalUrl,
+  author: { '@type': 'Person', name: 'Arshad Kazi', url: `${siteUrl}/` }
+});
+if (crumbs.length > 1) structured.push({
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.item }))
+});
 
 const navItems = [
   { label: 'About', href: '/' },
@@ -65,9 +99,9 @@ const elsewhere = [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..700;1,6..72,200..700&family=IBM+Plex+Mono:wght@400;500&family=Great+Vibes&display=swap" rel="stylesheet" />
     <link rel="canonical" href={canonicalUrl} />
-    <title>{title}</title>
+    <title>{pageTitle}</title>
     <meta name="description" content={metaDescription} />
-    <meta property="og:title" content={title} />
+    <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={metaDescription} />
     <meta property="og:image" content={metaImage} />
     <meta property="og:image:secure_url" content={metaImage} />
@@ -77,10 +111,15 @@ const elsewhere = [
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={title} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={published ? 'article' : 'website'} />
+    {published && <meta property="article:published_time" content={published} />}
+    {published && <meta property="article:author" content="Arshad Kazi" />}
+    <meta name="author" content="Arshad Kazi" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    {structured.map(d => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
     <meta property="og:site_name" content="Arshad Kazi" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
+    <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={metaDescription} />
     <meta name="twitter:image" content={metaImage} />
     <slot name="head" />
