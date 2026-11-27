@@ -75,7 +75,10 @@
      the layout, so the axis is exact where scrollbars take room. */
   --frame-max: 1760px;
   --frame-pad: clamp(1.25rem, 5vw, 5rem);
-  --axis: max(var(--frame-pad), calc((100vw - var(--sbw, 0px) - var(--frame-max)) / 2));
+  --axis: max(var(--frame-pad), calc((var(--vw) - var(--frame-max)) / 2));
+  /* The window's width less its scrollbar: what full-bleed pieces span, so
+     they stay centred where scrollbars take room. */
+  --vw: calc(100vw - var(--sbw, 0px));
   --space-xs: 0.3rem;
   --space-sm: 0.6rem;
   --space-md: 1.2rem;
@@ -96,6 +99,7 @@
   --fs-small: 0.82rem;      /* secondary text, notes, figure captions */
   --fs-ui: 1rem;            /* buttons, inputs, list text */
   /* --fs-body: 1.16rem;       reading text (defined above) */
+  --fs-body-wide: 1.22rem;  /* reading text on large screens (1600px+) */
   --fs-lead: 1.3rem;        /* ledes, standfirsts, pull quotes */
   --fs-h3: clamp(1.3rem, 2.2vw, 1.7rem);
   --fs-h2: clamp(1.5rem, 3vw, 2.1rem);
@@ -103,6 +107,8 @@
   --fs-display: clamp(3.4rem, 4.9vw, 6.4rem);
   --fs-display-xl: clamp(3.6rem, 10vw, 12rem);  /* page masts: one size on Home, Blogs, Thoughts, Contact */
   --fs-index: clamp(2.2rem, 5.6vw, 8.5rem);  /* the Blogs index: one huge title to a row */
+  --fs-plate-no: clamp(6rem, 11vw, 11rem);  /* Thoughts: the hollow essay numbers */
+  --fs-act: clamp(1.1rem, min(5.4vw, 3.3svh), 1.75rem);  /* About on a phone: one sentence, sized to the screen */
   --fs-statement: clamp(1.9rem, 1.6vw + 1.3rem, 3.2rem); /* index page headings, said as a sentence */
 
   /* Weights. Newsreader runs 200–700; Plex Mono has 400 and 500. */
@@ -176,7 +182,8 @@
      numbers, and only these five may appear):
        480px  small phone      760px  phone / tablet
        600px  large phone      1100px tablet / desktop
-                               1240px wide (margin contents) */
+                               1240px wide (margin contents)
+                               1600px large screen (reading type, side sketches) */
 }
 
 html.dark {
@@ -336,7 +343,7 @@ body {
   top: calc(var(--head-h, 4.5rem) + 84px);
   bottom: 64px;
   left: 0;
-  width: calc((100vw - 760px) / 2);
+  width: calc((var(--vw) - 760px) / 2);
   padding: 0 var(--space-10) 0 var(--space-8);
   overflow-y: auto;
   flex-direction: column;
@@ -670,6 +677,7 @@ body > header.scrolled {
   padding-left: var(--space-3);
   border-left: 1px solid var(--color-border);
   line-height: var(--lh-snug);
+  white-space: nowrap;
 }
 
 .nav-links {
@@ -830,6 +838,17 @@ html.dark .theme-toggle .icon-moon { display: none; }
     width: 13px;
     height: 13px;
   }
+}
+
+/* Small phones: four capitals words, the rule and the toggle must fit in
+   320px less the gutters, so the row tightens rather than spilling. */
+@media (max-width: 480px) {
+  .nav-links { gap: 0; }
+  .nav-link {
+    padding: 0 var(--space-1-5);
+    letter-spacing: var(--track-normal);
+  }
+  .nav-separator { margin: 0 var(--space-1); }
 }
 
 /* ── Main ────────────────────────────────────────────── */
@@ -2100,7 +2119,7 @@ html,body{overflow-x:clip;}
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-soft);
-    z-index: 5;
+    z-index: 3;
   }
 
   /* While the note is open, the sketch behind steps back for the reading. */
@@ -2712,7 +2731,7 @@ pre,
     --toc-w: 15rem;
     --toc-gap: 2.75rem;
     --toc-edge: 2rem;
-    --wide: min(980px, calc(100vw - 2 * (var(--toc-w) + var(--toc-gap) + var(--toc-edge))));
+    --wide: min(980px, calc(var(--vw) - 2 * (var(--toc-w) + var(--toc-gap) + var(--toc-edge))));
   }
   main > .blog-post.tech { --measure: 680px; }
 
@@ -2738,7 +2757,7 @@ pre,
   .blog-post.tech .blog-post-content .katex-display { text-align: center; }
 
   body:has(main > .blog-post.tech) .margin-toc {
-    left: max(var(--toc-edge), calc((100vw - var(--wide)) / 2 - var(--toc-w) - var(--toc-gap)));
+    left: max(var(--toc-edge), calc((var(--vw) - var(--wide)) / 2 - var(--toc-w) - var(--toc-gap)));
     width: var(--toc-w);
     padding: 0;
   }
@@ -2749,7 +2768,7 @@ pre,
 @media (min-width: 1600px) {
   main > .blog-post.tech { --measure: 720px; }
   .blog-post.tech .blog-post-content p,
-  .blog-post.tech .blog-post-content li { font-size: 1.22rem; }
+  .blog-post.tech .blog-post-content li { font-size: var(--fs-body-wide); }
 }
 
 /* ── The opening letter ─────────────────────────────────────────

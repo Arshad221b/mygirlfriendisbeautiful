@@ -358,7 +358,7 @@ const byIndex = new Map(posts.map((p, i) => [p.slug, i]));
     font-family: var(--font-serif);
     font-style: italic;
     font-size: var(--fs-small);
-    line-height: 1.6;
+    line-height: var(--lh-ui);
     text-align: left;
     color: var(--color-text-secondary);
   }
@@ -380,7 +380,7 @@ const byIndex = new Map(posts.map((p, i) => [p.slug, i]));
     top: -0.74em;
     left: -0.08em;
     font-family: var(--font-display);
-    font-size: clamp(6rem, 11vw, 11rem);
+    font-size: var(--fs-plate-no);
     font-weight: var(--fw-display);
     line-height: var(--lh-none);
     letter-spacing: var(--track-mast);
@@ -613,8 +613,11 @@ const byIndex = new Map(posts.map((p, i) => [p.slug, i]));
       column-gap: var(--space-6);
     }
 
+    /* Each bank is too narrow here for the opening line and the plate
+       side by side, and the line would print over the picture; the
+       landing keeps its date and plate. */
     .entry-quote {
-      max-width: 15rem;
+      display: none;
     }
 
     .entry { --fw: 22rem; --fx: -3rem; }

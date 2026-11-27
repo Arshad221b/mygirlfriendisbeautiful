@@ -459,7 +459,7 @@ const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
     gap: var(--space-1-5);
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--color-border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     color: var(--color-text-muted);
   }
   .recon .r-track li span { opacity: 0.6; }
@@ -483,7 +483,7 @@ const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
   .recon .r-toc a {
     display: flex;
     gap: var(--space-2);
-    padding: 2px 0;
+    padding: var(--space-0-5) 0;
     font-size: var(--fs-ui);
     color: var(--color-text-secondary);
     text-decoration: none;
@@ -550,7 +550,7 @@ const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
     display: inline-block;
     padding: 0 var(--space-1-5);
     border: 1px solid var(--color-accent);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-family: var(--font-sans);
     font-size: var(--fs-label);
     text-transform: uppercase;
@@ -589,11 +589,19 @@ const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
     border-radius: var(--radius-lg);
   }
   .recon .r-fig svg { display: block; width: 100%; height: auto; }
-  /* Phones: SVG text scales with the drawing, so a 600-wide figure in a
-     310px column has 6px labels. Keep a floor and let the figure scroll. */
-  @media (max-width: 640px) {
-    .recon .r-fig { padding: var(--space-3) var(--space-2); overflow-x: auto; overscroll-behavior-x: contain; }
-    .recon .r-fig svg { min-width: 520px; }
+  /* Phones: SVG text scales with the drawing. The figure takes the whole
+     screen width (never a sideways scroll) and labels keep their drawn size,
+     which is the largest that fits. */
+  @media (max-width: 600px) {
+    .recon .r-fig {
+      padding: var(--space-3) 0;
+      margin-left: calc(-1 * var(--axis));
+      margin-right: calc(-1 * var(--axis));
+      border-radius: 0;
+      border-left: 0;
+      border-right: 0;
+    }
+    .recon .r-fig figcaption { padding: 0 var(--axis); }
   }
   .recon .r-fig figcaption {
     margin-top: var(--space-2);
@@ -613,8 +621,8 @@ const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
   .recon .r-fig .coarse path { stroke: var(--color-text-muted); stroke-width: 1.4; fill: none; }
   .recon .r-fig .vanes path { stroke: var(--color-accent); stroke-width: 2; stroke-linecap: round; fill: none; }
   .recon .r-fig text { fill: var(--color-text-secondary); font-family: var(--font-mono); }
-  .recon .r-fig .fig-label { font-size: 13px; }
-  .recon .r-fig .fig-big { font-size: 22px; fill: var(--color-text); }
+  .recon .r-fig .fig-label { font-size: var(--fig-label, 13px); }
+  .recon .r-fig .fig-big { font-size: var(--fig-big, 22px); fill: var(--color-text); }
   .recon .r-fig .mid { text-anchor: middle; }
   .recon .r-fig .accent { fill: var(--color-accent); }
   .recon .r-fig .sig { fill: none; stroke: var(--color-text); stroke-width: 1.6; }

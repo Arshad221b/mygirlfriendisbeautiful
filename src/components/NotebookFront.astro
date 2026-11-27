@@ -419,7 +419,7 @@ const hasConclusion = Astro.slots.has('conclusion');
   .syl-topics { margin: 0; padding: 0; list-style: none; }
   .syl-topics li {
     position: relative;
-    padding: 3px 0 3px var(--space-5);
+    padding: var(--space-1) 0 var(--space-1) var(--space-5);
     font-family: var(--font-sans);
     font-size: var(--fs-small);
     line-height: var(--lh-snug);
@@ -433,7 +433,7 @@ const hasConclusion = Astro.slots.has('conclusion');
     width: 0.6em;
     height: 0.6em;
     border: 1px solid var(--color-border);
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
   }
   .syl-topics li.done::before { border-color: var(--color-accent); background: var(--color-accent); }
   .syl-topics li.done a { color: var(--color-text); text-decoration: none; }
@@ -486,7 +486,7 @@ const hasConclusion = Astro.slots.has('conclusion');
     display: flex;
     align-items: baseline;
     gap: var(--space-2);
-    padding: 3px 0;
+    padding: var(--space-1) 0;
     font-family: var(--font-serif);
     font-size: var(--fs-ui);
     line-height: var(--lh-snug);

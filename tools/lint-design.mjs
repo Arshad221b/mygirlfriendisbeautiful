@@ -13,7 +13,7 @@ const files = [];
   }
 })('src');
 
-const BREAKPOINTS = new Set([480, 481, 600, 601, 759, 760, 761, 1099, 1100, 1101, 1239, 1240]);
+const BREAKPOINTS = new Set([480, 481, 600, 601, 759, 760, 761, 1099, 1100, 1101, 1239, 1240, 1599, 1600]);
 const SPACING = /^(margin|padding|gap|row-gap|column-gap)(-|$)/;
 
 // What each property may hold besides a token.

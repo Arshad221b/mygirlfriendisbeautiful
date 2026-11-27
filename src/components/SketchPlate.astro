@@ -60,7 +60,7 @@ import PlateCredit from './PlateCredit.astro';
     opacity: 0.7;
     cursor: pointer;
     pointer-events: auto;
-    transition: opacity 0.3s ease, color 0.3s ease;
+    transition: opacity var(--dur-base) ease, color var(--dur-base) ease;
   }
   .plate-all svg { fill: currentColor; }
   .plate-all:hover, .plate-all:focus-visible { opacity: 1; color: var(--color-accent); }
@@ -71,7 +71,7 @@ import PlateCredit from './PlateCredit.astro';
     max-height: min(82svh, 900px);
     padding: 0;
     border: 1px solid color-mix(in srgb, var(--color-text) 14%, transparent);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     background: var(--color-bg);
     color: var(--color-text);
     overflow: hidden;
@@ -81,7 +81,7 @@ import PlateCredit from './PlateCredit.astro';
   .plate-index::backdrop { background: color-mix(in srgb, var(--color-bg) 55%, transparent); backdrop-filter: blur(6px); }
   /* Only the list scrolls; the page behind stays where it was. */
   html:has(.plate-index[open]) { overflow: hidden; }
-  .plate-index .pi-bar { flex: none; display: flex; justify-content: flex-end; padding: 10px 10px 0; }
+  .plate-index .pi-bar { flex: none; display: flex; justify-content: flex-end; padding: var(--space-2) var(--space-2) 0; }
   .plate-index .pi-body {
     flex: 1 1 auto;
     min-height: 0;
@@ -99,26 +99,26 @@ import PlateCredit from './PlateCredit.astro';
     background: var(--color-bg);
     color: var(--color-text-muted);
     cursor: pointer;
-    transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-base) var(--ease-out);
   }
   .plate-index .pi-close svg { stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; fill: none; }
   .plate-index .pi-close:hover, .plate-index .pi-close:focus-visible { color: var(--color-accent); border-color: var(--color-accent); transform: rotate(90deg); }
-  @media (max-width: 759px) { .plate-index .pi-body { padding: 0 18px 24px; } }
+  @media (max-width: 759px) { .plate-index .pi-body { padding: 0 var(--space-4) var(--space-6); } }
   .plate-index h2 {
     margin: 0 0 var(--space-2, 0.5rem);
-    font-family: var(--font-sans); font-size: var(--fs-label); font-weight: 500;
+    font-family: var(--font-sans); font-size: var(--fs-label); font-weight: var(--fw-medium);
     text-transform: uppercase; letter-spacing: var(--track-label); color: var(--color-text-muted);
   }
   .plate-index section + section { margin-top: var(--space-6, 2rem); }
   .plate-index ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 0 var(--space-6, 2rem); }
   .plate-index li { border-top: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
   .plate-index li button {
-    display: grid; gap: 2px; width: 100%; padding: 0.7rem 0; border: 0; background: none;
+    display: grid; gap: var(--space-0-5); width: 100%; padding: var(--space-3) 0; border: 0; background: none;
     color: inherit; font: inherit; text-align: left; cursor: pointer;
   }
   .plate-index .pi-t { font-family: var(--font-serif); font-style: italic; font-size: var(--fs-small); line-height: var(--lh-snug); }
   .plate-index .pi-by { font-family: var(--font-sans); font-size: var(--fs-label); text-transform: uppercase; letter-spacing: var(--track-label); color: var(--color-text-muted); }
-  .plate-index .pi-note { margin-top: 2px; font-size: var(--fs-small); line-height: var(--lh-snug); color: var(--color-text-muted); }
+  .plate-index .pi-note { margin-top: var(--space-0-5); font-size: var(--fs-small); line-height: var(--lh-snug); color: var(--color-text-muted); }
   .plate-index li button:hover .pi-t { color: var(--color-accent); }
 </style>
 
@@ -184,7 +184,7 @@ import PlateCredit from './PlateCredit.astro';
   }
 </style>
 
-<script is:inline>
+<script>
 // Started once the page is read, so a page's places for the drawing exist.
 (function (run) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run(); })(function () {
   var plate = document.querySelector('.plate');
@@ -295,19 +295,20 @@ import PlateCredit from './PlateCredit.astro';
     targets = [];
   }
   // Fit the drawing to the free space of the opening: from under the
-  // header to just above the words (the sentence on a wide screen, the
-  // page's name on a phone). The credit sits at the foot of that space and
-  // the drawing takes everything above it. CSS places them until this runs.
+  // header to just above the page's name. The credit sits at the foot of
+  // that space, always clear of the name, and the drawing takes everything
+  // above it. CSS places them until this runs.
   var meta = plate.querySelector('.plate-meta'), fitted = '';
   function layout() {
     if (roving) return place();
-    var head = document.querySelector('header'), below = document.querySelector('.first-screen .page-statement');
+    var head = document.querySelector('header'), below = document.querySelector('.first-screen .page-name') || document.querySelector('.first-screen .page-statement');
     if (!head || !below) return false;
     var top0 = plate.getBoundingClientRect().top;
     var from = head.getBoundingClientRect().bottom - top0 + 12;
     var to = below.getBoundingClientRect().top - top0 - (innerWidth < 760 ? 14 : 22);
-    var ch = meta.offsetHeight, h = Math.round(to - from - ch - 10);
-    if (h < 120) return false;                                      // too little room: keep the CSS layout
+    // A short window leaves the drawing little room; it keeps a floor and
+    // may run behind the name, but the credit never does.
+    var ch = meta.offsetHeight, h = Math.max(120, Math.round(to - from - ch - 10));
     var key = from + ':' + h + ':' + to + ':' + innerWidth;
     if (key === fitted) return false;
     fitted = key;
@@ -628,6 +629,8 @@ import PlateCredit from './PlateCredit.astro';
     }
   }
 
+  // The flow at a point, written here by at() so a frame allocates nothing.
+  var fu = 0, fv = 0;
   function at(x, y) {
     var gx = x / CELL, gy = y / CELL;
     if (gx < 0) gx = 0; else if (gx > GX - 1.001) gx = GX - 1.001;

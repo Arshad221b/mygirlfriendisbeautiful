@@ -60,7 +60,7 @@ const { credits } = Astro.props;
   .plate-title,
   .plate-by {
     min-height: 1.35em;
-    transition: opacity 0.5s ease;
+    transition: opacity var(--dur-slow) ease;
     /* A soft halo of paper, so the credit reads over the ink behind it. */
     text-shadow: 0 0 4px var(--color-bg), 0 0 8px var(--color-bg), 0 0 14px var(--color-bg);
   }
@@ -75,7 +75,10 @@ const { credits } = Astro.props;
     .plate-meta { top: calc(var(--head-h, 4.5rem) + 1.5svh + 27svh + var(--space-2)); }
   }
   @media (max-width: 759px) {
-    .plate-meta { top: calc(var(--head-h, 5.4rem) + 30svh); gap: 2px; width: max-content; max-width: calc(100vw - 2rem); white-space: normal; }
+    .plate-meta { top: calc(var(--head-h, 5.4rem) + 30svh); gap: var(--space-0-5); width: max-content; max-width: calc(100vw - 2rem); white-space: normal; }
+    /* A long title wraps to two lines here; the credit keeps room for both,
+       its words at the foot, so it is measured at its tallest. */
+    .plate-meta { min-height: 4rem; justify-content: flex-end; }
     .plate-title { text-wrap: balance; }
   }
   .plate-meta { transition: opacity 0.9s ease, filter 0.9s ease; }

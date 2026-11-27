@@ -68,11 +68,14 @@ Three families, each with one job:
 | `--fs-small` | 0.82rem | Notes, figure captions, secondary lines |
 | `--fs-ui` | 1rem | Buttons, inputs, list text |
 | `--fs-body` | 1.16rem | **Reading text** |
+| `--fs-body-wide` | 1.22rem | Reading text on large screens (from 1600px) |
 | `--fs-lead` | 1.3rem | Ledes, standfirsts, pull quotes |
 | `--fs-h3` | 1.3 → 1.7rem | Sub-heads, entry titles |
 | `--fs-h2` | 1.5 → 2.1rem | Section heads, row titles |
 | `--fs-h1` | 2.2 → 3.6rem | Article titles, big numerals |
 | `--fs-display` | 3.4 → 6.4rem | The essay hero title (wide screens) |
+| `--fs-plate-no` | 6 → 11rem | Thoughts: the hollow essay numbers |
+| `--fs-act` | 1.1 → 1.75rem | About on a phone: the one sentence, sized to the screen's width and height |
 | `--fs-display-xl` | 3.6 → 12rem | Page masts: home, Blogs, Thoughts, Contact (`.mast-title`) |
 
 - `em` sizes are allowed only for inline text sized against its parent
@@ -141,6 +144,7 @@ Only these, written as numbers because CSS cannot read variables in `@media`:
 | `max-width: 760px` | Phone / tablet boundary (`min-width: 761px` above it) |
 | `max-width: 1100px` | Tablet / desktop (`min-width: 1101px` above) |
 | `max-width: 1239px` / `min-width: 1240px` | Wide: room for margin contents |
+| `min-width: 1600px` | Large screen: a little larger reading type, the side sketches |
 
 Exact complements (759/760, 1099/1100) are allowed so ranges do not
 overlap. Plus `(hover: hover)`, `(hover: none)` and
@@ -190,9 +194,9 @@ Interface feedback uses three speeds and `--ease-out`:
 - `--dur-slow` 0.4s — a panel or sheet.
 
 **The four signature animations** (the only motion not caused by the
-reader): the logo's ink pot; the home intro (once every 60 days, or on
-replay); the sketch backgrounds on Blogs and Thoughts; the theme toggle's
-circle reveal. Nothing else may animate on its own. Everything respects
+reader): the logo's ink pot; the About points settling in on load (the
+acts themselves follow the scroll); the sketch backgrounds on Thoughts;
+the theme toggle's circle reveal. Nothing else may animate on its own. Everything respects
 `prefers-reduced-motion`.
 
 Rules for any motion: only `opacity` and `transform` animate; nothing
@@ -284,6 +288,25 @@ Each appears once per place, always in the mast's hairline (`--fw-display`,
 - **Years (Thoughts)** — the river's year marks at `--fs-display-xl`.
 - **Opening letter** — the first letter of every essay dropped three lines
   in the accent (`initial-letter`, with a float fallback).
+
+### About: nine drawings, one cast
+
+The About page opens on the author's photograph, name and line beside a
+brain in lateral view, drawn as an anatomical plate in smooth curves. Then one sentence to a screen (eight, in the author's
+words), each with its drawing: a long curve that never settles; the
+author's circle with a line stopping short of the world's circle and its
+people; the compass construction that bridges it; words and a spiral of
+quarter circles; arches on rails to a vanishing point; people as unclosed
+circles; ripples crowding to one side; the people closed and joined to the
+author by measured lines. Only circles, straight lines and smooth curves,
+at one hairline weight in a soft ink; the author is one small circle in
+the signal colour, in every drawing.
+
+Every drawing is the same twenty-eight continuous lines, always visible.
+Between drawings nothing fades or is erased: each line moves and bends
+into the nearest line of the next drawing, from its nearer end. The
+sentence changes halfway through the change; the drawing glides after the
+scroll.
 
 ## 14. Performance
 

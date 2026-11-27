@@ -102,7 +102,7 @@ const slots = place === 'top' ? ['c', 'l', 'r'] : ['full'];
   }
   .sketch-bg.at-top .sk-l { top: 20svh; left: 1vw; animation-duration: 19s; animation-direction: alternate-reverse; }
   .sketch-bg.at-top .sk-r { top: 12svh; right: 1vw; animation-duration: 25s; }
-  @media (min-width: 1400px) {
+  @media (min-width: 1600px) {
     .sketch-bg.at-top .sk-l,
     .sketch-bg.at-top .sk-r { display: block; }
     .sketch-bg.at-top .sk-c { width: min(46vw, 100svh); margin-left: calc(min(46vw, 100svh) / -2); }
@@ -112,7 +112,7 @@ const slots = place === 'top' ? ['c', 'l', 'r'] : ['full'];
   body:has(.first-screen .why[open]) .sketch-bg.at-top { --o: 0.12; }
 
   @media (max-width: 759px) {
-    .sketch-bg { width: 100vw; --o: 0.24; }
+    .sketch-bg { width: var(--vw); --o: 0.24; }
     html.dark .sketch-bg { --o: 0.16; }
 
     /* A band of its own above the words. */
@@ -134,7 +134,7 @@ const slots = place === 'top' ? ['c', 'l', 'r'] : ['full'];
   }
 </style>
 
-<script is:inline>
+<script>
 (function () {
   var box = document.querySelector('.sketch-bg');
   if (!box) return;

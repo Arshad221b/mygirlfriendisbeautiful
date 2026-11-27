@@ -392,6 +392,8 @@ const wall = items.flatMap(it => {
     color: var(--color-text);
   }
   .ix-ask:focus-within .ix-key { opacity: 0; }
+  /* A touch screen has no / key to press. */
+  @media (hover: none) { .ix-key { display: none; } }
 
   /* The wall: every section heading and every notebook day, run together
      as one justified passage. Searching lights the phrases that match and
@@ -671,13 +673,16 @@ const wall = items.flatMap(it => {
       padding-top: var(--space-4);
       text-align: left;
     }
-    .row-days { padding-left: calc(4.5rem + var(--space-lg)); }
+    .row-days { padding-left: calc(var(--space-18) + var(--space-lg)); }
   }
 
   /* ── Phones ── */
   @media (max-width: 760px) {
     .ix-open { padding-bottom: var(--space-lg); }
-    .ix-strip { justify-content: flex-start; }
+    /* Two even columns, so the four readings line up instead of
+       wrapping raggedly. */
+    .ix-strip { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); }
+    .ix-strip > :nth-child(even) { text-align: right; }
     .ix-title { margin-top: var(--space-xl); }
     .ix-wall { margin-top: var(--space-lg); font-size: var(--fs-ui); max-height: 12em; text-align: left; }
 

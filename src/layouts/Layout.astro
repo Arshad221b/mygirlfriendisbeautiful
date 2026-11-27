@@ -63,7 +63,7 @@ const elsewhere = [
     <link rel="alternate" type="application/rss+xml" title="Arshad Kazi" href="/rss.xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..700;1,6..72,200..700&family=IBM+Plex+Mono:wght@400;500&family=Great+Vibes&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..700;1,6..72,200..700&family=IBM+Plex+Mono:wght@400;500&family=Great+Vibes&display=swap" rel="stylesheet" />
     <link rel="canonical" href={canonicalUrl} />
     <title>{title}</title>
     <meta name="description" content={metaDescription} />
@@ -339,7 +339,7 @@ const elsewhere = [
       // script after the page loads, so each is fitted as it appears, and
       // again whenever a font, a stylesheet or the window changes its size.
       (function () {
-        var sel = '.katex-display, .mini-diagram, .arch-diagram, [class*="table-wrap"], .blog-post-content table';
+        var sel = '.katex-display, .deriv-step, .mini-diagram, .arch-diagram, [class*="table-wrap"], .blog-post-content table';
         var seen = window.WeakSet ? new WeakSet() : null, t = 0;
         var ro = window.ResizeObserver ? new ResizeObserver(soon) : null;
         function soon() { clearTimeout(t); t = setTimeout(fit, 60); }

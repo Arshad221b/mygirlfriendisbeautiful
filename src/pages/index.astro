@@ -1,162 +1,40 @@
 ---
-import { img, share, has } from '../lib/media';
-/* The home page.
-
-   The centre of it is a figure, not a photograph: every essay on the site
-   as a point in space, placed by the same model that powers search on the
-   Thoughts page, laid out along the three directions in which the essays
-   differ most from one another. Points that sit together
-   share ideas. The fine dust around them is decoration, drawn densest where
-   the essays are, the way a reconstruction fills in around its keypoints. */
-
+import { img, share } from '../lib/media';
+/* About: the author's photograph, name and line beside a brain drawn in
+   smooth curves. Then one sentence to a screen, and one cast of strokes (rings,
+   the world's circle, its people, a line, compass arcs, ripples) that
+   turns from scene to scene, each change saying what the sentence says:
+   the rings knot, the knot tightens into the author, a line stops short,
+   a compass bridges it, words and a spiral, arches, people left unfinished,
+   ripples too strong on one side, then measured lines to each person. The
+   author is one small circle in the signal colour, in every scene. */
 import Layout from '../layouts/Layout.astro';
-import { posts as essays } from '../lib/thoughts-data';
-import { proseOf } from '../lib/text';
-import { buildThoughtModel } from '../lib/thought-model';
-import { notebooks } from '../lib/notebooks';
 
-/* The map holds everything written here: the essays, the technical blogs
-   and the notebooks, fitted together so each sits by what it is about. */
-const blogSources = import.meta.glob(['./blog/*.astro', './sign-language-recognition-using-cnn-and-opencv.astro'], {
-  query: '?raw', import: 'default', eager: true,
-}) as Record<string, string>;
-const attr = (raw: string, k: string) => (raw.match(new RegExp(`\\b${k}="([^"]*)"`))?.[1] ?? '').trim();
-const blogs = Object.entries(blogSources).map(([path, raw]) => {
-  const slug = path.split('/').pop()!.replace('.astro', '');
-  return {
-    slug, title: attr(raw, 'title'), date: attr(raw, 'date'), description: attr(raw, 'description'),
-    text: proseOf(raw), href: path.includes('/blog/') ? `/blog/${slug}` : `/${slug}`,
-  };
-}).filter(b => b.title && b.date);
-const posts = [
-  ...essays.map(p => ({ title: p.title, date: p.date, href: `/thoughts/${p.slug}`, kind: 'Essay' })),
-  ...blogs.map(b => ({ title: b.title, date: b.date, href: b.href, kind: 'Blog' })),
-  ...notebooks.map(n => ({ title: n.title, date: n.endDate, href: `/notebooks/${n.slug}`, kind: 'Notebook' })),
+// One sentence to a screen; the picture takes one step with each.
+const acts = [
+  { say: "For a long time I felt I was too complicated to explain, and it caused me a great deal of trouble." },
+  { say: "In truth, what I lacked was the ability to communicate, and an understanding of the world and the people in it." },
+  { say: "This site is my attempt to work on both, starting with the way my mind already works." },
+  { say: "It thinks far better in images than in words." },
+  { say: "That is why fields built on seeing, such as computer vision (where I earn my living), architecture, visual art and fine cinematography, have always drawn me in." },
+  { say: "People are harder to picture: I struggle to understand emotions, and even more to manage them." },
+  { say: "Either I become overly sensitive about something, or I fail to register my own feelings and those of the people around me." },
+  { say: "So I study them the way I study everything else, through psychology, neuroscience and analytical thinking, until I can understand them in a language I understand." },
 ];
-const model = buildThoughtModel([
-  ...essays.map(p => ({ slug: p.slug, title: p.title, description: [p.description, ...p.tags].join(' '), text: p.text })),
-  ...blogs.map(b => ({ slug: b.slug, title: b.title, description: b.description, text: b.text })),
-  ...notebooks.map(n => ({ slug: `notebook-${n.slug}`, title: n.title, description: [n.description, ...n.tags].join(' '),
-    text: [n.conclusion, ...n.days.map(d => d.title)].join('. ') })),
-]);
-
-const title = "Arshad Kazi";
-
-/* Positions are the first three principal components of the essays'
-   latent vectors: the three directions along which what I write about
-   varies most. Power iteration with deflation; the matrix is tiny. */
-const vecs = model.docVectors;
-const dims = vecs[0]?.length ?? 0;
-const mean = Array.from({ length: dims }, (_, j) => vecs.reduce((s, v) => s + v[j], 0) / vecs.length);
-const centred = vecs.map(v => v.map((x, j) => x - mean[j]));
-const cov = Array.from({ length: dims }, (_, a) =>
-  Array.from({ length: dims }, (_, b) => centred.reduce((s, v) => s + v[a] * v[b], 0)));
-const components: number[][] = [];
-for (let c = 0; c < 3; c++) {
-  let w = Array.from({ length: dims }, (_, j) => Math.sin(j * 1.7 + c * 3.1) + 1.3);
-  for (let it = 0; it < 200; it++) {
-    let next = cov.map(row => row.reduce((s, x, j) => s + x * w[j], 0));
-    for (const prev of components) {
-      const d = next.reduce((s, x, j) => s + x * prev[j], 0);
-      next = next.map((x, j) => x - d * prev[j]);
-    }
-    const n = Math.hypot(...next) || 1;
-    w = next.map(x => x / n);
-  }
-  components.push(w);
-}
-const coord = (c: number) => centred.map(v => v.reduce((s, x, j) => s + x * components[c][j], 0));
-const xs = coord(0), ys = coord(1), zs = coord(2);
-
-/* Each axis is centred and scaled by its spread, not by its extremes: one
-   essay far from the rest would otherwise squash every other point into a
-   line. Anything beyond the edge is pulled back onto it. */
-const span = (a: number[]) => {
-  const mean = a.reduce((s, v) => s + v, 0) / a.length;
-  const sd = Math.sqrt(a.reduce((s, v) => s + (v - mean) ** 2, 0) / a.length) || 1;
-  return (v: number) => Math.max(-1.1, Math.min(1.1, (v - mean) / (1.8 * sd)));
-};
-const nx = span(xs), ny = span(ys), nz = span(zs);
-
-const field = {
-  points: posts.map((p, i) => ({
-    x: +nx(xs[i]).toFixed(3),
-    y: +ny(ys[i]).toFixed(3),
-    z: +(nz(zs[i]) * 0.7).toFixed(3),
-    title: p.title,
-    href: p.href,
-    kind: p.kind,
-    year: p.date.slice(0, 4),
-  })),
-  edges: model.edges.map(e => [e.a, e.b]),
-};
-
-/* "This is the journey of" ... and then one word after another, each with
-   its own type and its own way of arriving and leaving. The order is the
-   journey itself: it starts in wonder and rushes in with enthusiasm,
-   meets its own imperfection, owns it with honesty, makes peace with it
-   in acceptance, looks ahead in hope, and then waits, with patience. What
-   is left after all of that is curiosity, which the journey is named for:
-   patience's wait is the pause before the name. */
-const virtues = [
-  { text: 'wonder', tail: '', cls: 'wonder' },
-  { text: 'enthusiasm', tail: '!!', cls: 'enthusiasm' },
-  { text: 'imperfection', tail: '', cls: 'imperfection' },
-  { text: 'honesty', tail: '.', cls: 'honesty' },
-  { text: 'acceptance', tail: '', cls: 'acceptance' },
-  { text: 'hope', tail: '', cls: 'hope' },
-  { text: 'patience', tail: '...', cls: 'patience' },
-].map(v => {
-  const letters = [...v.text].map((c, j) => ({
-    c, j, tail: false,
-    // Fixed scatter for the letters acceptance gathers in, so it is the
-    // same on every visit.
-    y: (((j * 37) % 11) - 5) * 0.11,
-    r: (((j * 53) % 13) - 6) * 3.2,
-    face: j % 5,
-  }));
-  [...v.tail].forEach((c, k) => letters.push({ c, j: v.text.length + k, tail: true, y: 0, r: 0, face: 0 }));
-  return { ...v, letters };
-});
-
-const chars = (t: string) => [...t].map(c => (c === ' ' ? ' ' : c));
-
 const links = [
   { label: 'GitHub', href: 'https://github.com/Arshad221b' },
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/arshad221b/' },
   { label: 'Substack', href: 'https://substack.com/@arshadkazi' },
   { label: 'Email', href: 'mailto:arshadkaziblog@gmail.com' },
 ];
-
+const title = 'Arshad Kazi';
 ---
-
 <Layout title={title} activeNav="/" description="Arshad Kazi is an engineer in computer vision. Notebooks and technical writing on vision, the brain and machine learning, and personal essays." ogImage={share("/images/share-about.jpg")}>
-  <script is:inline slot="head">
-    /* The intro plays only when it is asked for: a click on the ink bottle
-       in the header, from any page, leaves a note for this tab and comes
-       home, and the note is read and thrown away here. Arriving any other
-       way (a link, the name in the header, a fresh visit) shows the
-       finished page. Never for anyone who has asked for less motion, or
-       for crawlers and automated browsers. Decided before the first paint,
-       so the page never flashes in and then hides itself. */
-    (function () {
-      try {
-        var asked = sessionStorage.getItem('intro-play') === '1';
-        sessionStorage.removeItem('intro-play');
-        if (!asked) return;
-        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        if (navigator.webdriver) return;
-        if (/bot|crawl|spider|slurp|lighthouse|headless|chrome-lighthouse|pagespeed|prerender|preview/i.test(navigator.userAgent)) return;
-        document.documentElement.classList.add('intro');
-      } catch (e) {}
-    })();
-  </script>
   <script type="application/ld+json" slot="head" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Arshad Kazi",
     "url": "https://arshad-kazi.com",
-    "image": "https://res.cloudinary.com/dpq4fqlde/image/upload/f_jpg,q_auto/site/profile.jpg",
     "jobTitle": "Engineer in computer vision",
     "description": "Notebooks, technical writing and personal essays.",
     "sameAs": [
@@ -167,2067 +45,638 @@ const links = [
     ]
   })} />
 
-  <div class="home wide">
-    <section class="hero">
-      <figure class="field" id="field">
-        <canvas id="field-canvas" aria-label={`A rotating map of ${posts.length} essays, blogs and notebooks, placed by meaning`}></canvas>
-        <a class="field-tip" id="field-tip" href="#" hidden>
-          <span class="field-tip-year label"></span>
-          <span class="field-tip-title"></span>
-        </a>
-      </figure>
-
-      <div class="hero-text">
-        <span class="portrait">
-          <img src={img("/images/profile.jpg", 800)} alt="Arshad Kazi" width="640" height="800" draggable="false" oncontextmenu="return false" />
-          <span class="portrait-guard" aria-hidden="true"></span>
-        </span>
-        <h1 class="mast-title"><span class="w"><span>Arshad</span></span> <span class="w"><em>Kazi</em></span></h1>
-        <p class="hero-role">Engineer in computer vision; I also write essays.</p>
-        <!-- Kept out of search results: a list of links reads as noise there. -->
-        <p class="hero-links" data-nosnippet>
-          {links.map(l => {
-            const mail = l.href.startsWith('mailto');
-            return (
-              <a href={l.href} target={mail ? undefined : '_blank'} rel="noopener">
-                <span class="hl-text">{l.label}</span><span class="hl-arrow" aria-hidden="true">{mail ? '→' : '↗'}</span>
-              </a>
-            );
-          })}
-        </p>
+  <div class="ab wide" id="ab">
+    <section class="stage" id="stage" aria-label="One set of fourteen lines that redraws itself with each sentence: a brain, a tangle, a line stopping short of a larger circle, a compass construction bridging it, words and a spiral, arches in perspective, people as unclosed circles, ripples, and measured lines to each person">
+      <div class="pin">
+        <canvas id="pts" aria-hidden="true"></canvas>
+        <!-- Who: the photograph, the name and the line, beside the roll. -->
+        <div class="who on" id="who">
+          <span class="who-print">
+            <img src={img('/images/profile.jpg', 600)} alt="Arshad Kazi" width="480" height="600" draggable="false" />
+          </span>
+          <h1 class="mast-title who-name">Arshad <em>Kazi</em></h1>
+          <p class="who-role">Engineer in computer vision; I also write essays.</p>
+          <p class="who-links" data-nosnippet>
+            {links.map(l => {
+              const mail = l.href.startsWith('mailto');
+              return <a href={l.href} target={mail ? undefined : '_blank'} rel="noopener">{l.label}<span aria-hidden="true">{mail ? '→' : '↗'}</span></a>;
+            })}
+          </p>
+        </div>
+        {acts.map((a, i) => (
+          <div class="act" data-i={i}>
+            <div class="act-text">
+              <p class="act-say">{a.say}</p>
+            </div>
+          </div>
+        ))}
+        <p class="act-hint" aria-hidden="true">Scroll <span>&darr;</span></p>
+        <ol class="act-ticks" aria-hidden="true">{acts.map(() => <li></li>)}</ol>
       </div>
-
-      <button class="replay" id="replay" type="button" aria-label="Replay intro">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.2 3.8v3.4h3.4"/></svg>
-      </button>
-
-      <p class="field-cap label" aria-hidden="true"><span class="sig">&#9679;</span>&nbsp; {posts.length} pieces, placed by meaning <span class="field-cap-hint">&middot; drag to turn</span></p>
     </section>
-  </div>
-
-
-  <script is:inline type="application/json" id="field-data" set:html={JSON.stringify(field)} />
-
-  <!-- The stage for the opening: the mark alone, before anything else. -->
-  <div class="intro-stage" id="intro-stage" aria-hidden="true">
-    <canvas class="ink-ripples" aria-hidden="true"></canvas>
-    <svg class="intro-mark" viewBox="22 2 56 96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-      <path class="ink" d="M50 52 C46 40 60 36 56 26 C52 16 40 20 44 30 C47 37 58 32 60 22 C62 12 54 6 48 8" stroke-width="3.4"/>
-      <g class="vessel">
-        <path class="pot" d="M39.2 94 C29.6 94 28.4 79.6 36.8 72.4 C40.4 69.4 41.6 67.6 41.6 64 L58.4 64 C58.4 67.6 59.6 69.4 63.2 72.4 C71.6 79.6 70.4 94 60.8 94 Z" stroke-width="3"/>
-        <path d="M42.8 64 L42.8 59.2 L57.2 59.2 L57.2 64 Z" fill="currentColor" stroke-width="1.5"/>
-        <path d="M33.2 82 C40.4 78.4 59.6 78.4 66.8 82" stroke-width="1.6"/>
-        <g fill="currentColor" stroke="none"><ellipse cx="38.0" cy="88" rx="1.5" ry="2.4"/><ellipse cx="42.8" cy="88" rx="1.5" ry="2.4"/><ellipse cx="47.6" cy="88" rx="1.5" ry="2.4"/><ellipse cx="52.4" cy="88" rx="1.5" ry="2.4"/><ellipse cx="57.2" cy="88" rx="1.5" ry="2.4"/><ellipse cx="62.0" cy="88" rx="1.5" ry="2.4"/></g>
-      </g>
-    </svg>
-    <!-- What is written. The opening line is set once and stays; the
-         slot after it holds the word of the moment. -->
-    <div class="ink-page">
-      <p class="ink-line" id="ink-line">
-        <span class="ink-lead">{chars('This is the journey of ').map(c => <span class="l">{c}</span>)}</span>
-        <span class="ink-slot" id="ink-slot">
-          {virtues.map(w => (
-            <span class={`vw vw-${w.cls}`}>
-              {w.letters.map(l => (
-                <span
-                  class:list={['l', l.tail ? 'tail' : `f${l.face}`, w.cls === 'imperfection' && l.j === 5 && 'odd']}
-                  style={`--y:${l.y.toFixed(2)}em;--r:${l.r.toFixed(1)}deg`}
-                >{l.c}</span>
-              ))}
-            </span>
-          ))}
-        </span>
-      </p>
-      <p class="ink-name-line" id="ink-name-line" aria-hidden="true">
-        <span class="ink-pre">This is the</span>
-        <span class="ink-name" id="ink-name"><span class="nm">Journey of <em>Curiosity</em></span><svg class="ink-flourish" viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><path d="M4 22 C 70 30, 130 6, 196 13 S 276 24, 296 6" /></svg></span>
-      </p>
-    </div>
-    <button class="intro-skip" id="intro-skip" type="button">Skip <span aria-hidden="true">&rarr;</span></button>
   </div>
 </Layout>
 
-<script is:inline>
-  /* ── The field ─────────────────────────────────────────────
-     A small perspective renderer on a 2D canvas. No library: the scene is
-     a few hundred points, a handful of lines and five camera frustums. */
-  (function () {
-    var fig = document.getElementById('field');
-    var canvas = document.getElementById('field-canvas');
-    var tip = document.getElementById('field-tip');
-    if (!canvas || !fig) return;
-    var data = JSON.parse(document.getElementById('field-data').textContent);
-    var ctx = canvas.getContext('2d');
-    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // Seeded, so the dust is the same shape on every visit.
-    var seed = 7;
-    function rand() {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    }
-    function gauss() {
-      return Math.sqrt(-2 * Math.log(rand() + 1e-9)) * Math.cos(2 * Math.PI * rand());
-    }
-
-    var pts = data.points;
-    var dust = [];
-    pts.forEach(function (p) {
-      for (var k = 0; k < 34; k++) {
-        dust.push([p.x + gauss() * 0.16, p.y + gauss() * 0.16, p.z + gauss() * 0.16]);
-      }
-    });
-    for (var k = 0; k < 260; k++) {
-      // A loose shell around everything, the sparse edge of a scan.
-      var u = rand() * 2 - 1, t = rand() * Math.PI * 2, r = 1.15 + rand() * 0.35;
-      var s = Math.sqrt(1 - u * u);
-      dust.push([r * s * Math.cos(t), r * u * 0.7, r * s * Math.sin(t)]);
-    }
-
-    // Five cameras around the scene, all looking at the middle of it.
-    var cams = [];
-    var camR = innerWidth < 600 ? 1.3 : 1.75;
-    for (var c = 0; c < 5; c++) {
-      var a = (c / 5) * Math.PI * 2 + 0.4;
-      cams.push({ x: Math.cos(a) * camR, y: -0.35 + (c % 2) * 0.5, z: Math.sin(a) * camR });
-    }
-
-    var W = 0, H = 0, dpr = 1;
-    function resize() {
-      var rect = canvas.getBoundingClientRect();
-      dpr = Math.min(devicePixelRatio || 1, 2);
-      W = rect.width; H = rect.height;
-      canvas.width = W * dpr; canvas.height = H * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    var yaw = 0.6, pitch = -0.18, vel = reduce ? 0 : 0.0016;
-    var dragging = false, downX = 0, downY = 0, lastX = 0, lastY = 0, hover = -1;
-
-    function project(x, y, z) {
-      // Rotate about Y, then X, then a pinhole camera at distance 3.4.
-      var cy = Math.cos(yaw), sy = Math.sin(yaw);
-      var x1 = x * cy - z * sy, z1 = x * sy + z * cy;
-      var cp = Math.cos(pitch), sp = Math.sin(pitch);
-      var y1 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
-      var d = 3.4 + z2;
-      var f = Math.min(W, H) * (W < 600 ? 1.1 : 1.25);
-      var cx0 = W > 900 ? W * 0.62 : W / 2, cy0 = W > 900 ? H * 0.42 : H * 0.36;
-      return { x: cx0 + (x1 * f) / d, y: cy0 + (y1 * f) / d, depth: z2, s: 3.4 / d };
-    }
-
-    function colors() {
-      var cs = getComputedStyle(document.documentElement);
-      return {
-        ink: cs.getPropertyValue('--color-text').trim(),
-        muted: cs.getPropertyValue('--color-text-muted').trim(),
-        accent: cs.getPropertyValue('--color-accent').trim(),
-      };
-    }
-    var col = colors();
-
-    /* During the intro the field assembles itself: essays appear one at a
-       time, the threads between them draw, then the dust and the cameras
-       fade in, like a reconstruction converging. Outside the intro every
-       progress value is simply 1. */
-    var introStart = document.documentElement.classList.contains('intro') ? Infinity : null;
-    window.fieldHold = function () { introStart = Infinity; };
-    window.fieldIntro = function () { introStart = performance.now(); };
-    window.fieldDone = function () { introStart = null; };
-    function prog(delay, dur) {
-      if (introStart === null) return 1;
-      var t = (performance.now() - introStart - delay) / dur;
-      t = t < 0 ? 0 : t > 1 ? 1 : t;
-      return 1 - Math.pow(1 - t, 3);
-    }
-    new MutationObserver(function () { col = colors(); if (reduce) projected = draw(); })
-      .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-
-      // Dust: smaller and fainter the further it is, like depth of field.
-      ctx.fillStyle = col.ink;
-      var dustP = prog(1000, 2000);
-      for (var i = 0; dustP > 0 && i < dust.length; i++) {
-        var q = project(dust[i][0], dust[i][1], dust[i][2]);
-        ctx.globalAlpha = Math.max(0.05, 0.42 - q.depth * 0.18) * 0.75 * dustP;
-        var r = 0.55 + q.s * 0.45;
-        ctx.fillRect(q.x - r / 2, q.y - r / 2, r, r);
-      }
-
-      // Cameras as wire frustums.
-      ctx.strokeStyle = col.muted;
-      ctx.lineWidth = 0.8;
-      var camP = prog(1800, 1500);
-      cams.forEach(function (cm) {
-        if (camP <= 0) return;
-        var o = project(cm.x, cm.y, cm.z);
-        // Four corners of a small image plane, a third of the way in.
-        var dx = -cm.x, dy = -cm.y, dz = -cm.z;
-        var len = Math.hypot(dx, dy, dz);
-        dx /= len; dy /= len; dz /= len;
-        var cx = cm.x + dx * 0.32, cyy = cm.y + dy * 0.32, cz = cm.z + dz * 0.32;
-        var rx = -dz, rz = dx; var rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl;
-        var w = 0.13, h = 0.09;
-        var corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function (k) {
-          return project(cx + rx * w * k[0], cyy + h * k[1], cz + rz * w * k[0]);
-        });
-        ctx.globalAlpha = Math.max(0.12, 0.5 - o.depth * 0.2) * camP;
-        ctx.beginPath();
-        corners.forEach(function (p) { ctx.moveTo(o.x, o.y); ctx.lineTo(p.x, p.y); });
-        ctx.moveTo(corners[0].x, corners[0].y);
-        for (var j = 1; j <= 4; j++) ctx.lineTo(corners[j % 4].x, corners[j % 4].y);
-        ctx.stroke();
-      });
-
-      // The essays and the threads between nearest neighbours.
-      var P = pts.map(function (p) { return project(p.x, p.y, p.z); });
-      ctx.strokeStyle = col.accent;
-      ctx.lineWidth = 0.7;
-      data.edges.forEach(function (e, k) {
-        var a = P[e[0]], b = P[e[1]];
-        var ep = prog(650 + k * 30, 950);
-        if (ep <= 0) return;
-        var lit = hover === e[0] || hover === e[1];
-        ctx.globalAlpha = lit ? 0.9 : 0.22;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(a.x + (b.x - a.x) * ep, a.y + (b.y - a.y) * ep); ctx.stroke();
-      });
-
-      var order = P.map(function (p, i) { return i; }).sort(function (a, b) { return P[b].depth - P[a].depth; });
-      order.forEach(function (i) {
-        var p = P[i];
-        var pp = prog(i * 75, 900);
-        if (pp <= 0) return;
-        var on = i === hover;
-        var r = (on ? 5.5 : 3.2) * p.s * pp;
-        ctx.globalAlpha = (on ? 1 : Math.max(0.35, 1 - p.depth * 0.35)) * pp;
-        ctx.fillStyle = col.accent;
-        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-        // A keypoint marker: a ring with a gap, as a detector draws it. In
-        // the intro it closes in on its point, like a detection locking on.
-        ctx.strokeStyle = col.accent;
-        ctx.lineWidth = on ? 1.2 : 0.8;
-        ctx.beginPath(); ctx.arc(p.x, p.y, r + (on ? 7 : 4.5) * p.s + (1 - pp) * 16, 0.25, Math.PI * 2 - 0.25); ctx.stroke();
-        if (on) {
-          ctx.globalAlpha = 0.6;
-          ctx.beginPath();
-          ctx.moveTo(p.x - 22, p.y); ctx.lineTo(p.x - 10, p.y);
-          ctx.moveTo(p.x + 10, p.y); ctx.lineTo(p.x + 22, p.y);
-          ctx.moveTo(p.x, p.y - 22); ctx.lineTo(p.x, p.y - 10);
-          ctx.moveTo(p.x, p.y + 10); ctx.lineTo(p.x, p.y + 22);
-          ctx.stroke();
-        }
-      });
-      ctx.globalAlpha = 1;
-      return P;
-    }
-
-    var projected = [];
-    var visible = true;
-    function frame() {
-      // While the theme swaps, the field holds still, so the reveal has the
-      // frame to itself.
-      if (!document.documentElement.classList.contains('theme-swap')) {
-        if (!dragging && hover < 0) yaw += vel;
-        projected = draw();
-        if (hover >= 0) placeTip();
-      }
-      if (visible && !reduce) requestAnimationFrame(frame);
-    }
-
-    function placeTip() {
-      var p = projected[hover];
-      if (!p) return;
-      var left = Math.min(Math.max(p.x + 18, 8), W - 240);
-      tip.style.transform = 'translate(' + left + 'px,' + (p.y - 14) + 'px)';
-    }
-
-    function pick(mx, my) {
-      var best = -1, bd = 22 * 22;
-      projected.forEach(function (p, i) {
-        var d = (p.x - mx) * (p.x - mx) + (p.y - my) * (p.y - my);
-        if (d < bd) { bd = d; best = i; }
-      });
-      return best;
-    }
-
-    function setHover(i) {
-      if (i === hover) return;
-      hover = i;
-      if (i < 0) { tip.hidden = true; canvas.style.cursor = dragging ? 'grabbing' : 'grab'; }
-      else {
-        tip.hidden = false;
-        tip.href = pts[i].href;
-        tip.querySelector('.field-tip-title').textContent = pts[i].title;
-        tip.querySelector('.field-tip-year').textContent = pts[i].kind + ' · ' + pts[i].year;
-        canvas.style.cursor = 'pointer';
-        placeTip();
-      }
-      if (reduce) projected = draw();
-    }
-
-    canvas.addEventListener('pointerdown', function (e) {
-      dragging = true;
-      downX = lastX = e.clientX; downY = lastY = e.clientY;
-      canvas.setPointerCapture(e.pointerId);
-      fig.classList.add('touched');
-    });
-    canvas.addEventListener('pointermove', function (e) {
-      var rect = canvas.getBoundingClientRect();
-      if (dragging) {
-        var dx = e.clientX - lastX, dy = e.clientY - lastY;
-        lastX = e.clientX; lastY = e.clientY;
-        yaw += dx * 0.008;
-        pitch = Math.max(-1, Math.min(1, pitch + dy * 0.006));
-        if (Math.abs(dx) > 1) vel = (reduce ? 0 : Math.sign(dx) * 0.0016);
-        if (reduce) projected = draw();
-      }
-      setHover(pick(e.clientX - rect.left, e.clientY - rect.top));
-    });
-    function release(e) {
-      var moved = Math.hypot(e.clientX - downX, e.clientY - downY);
-      dragging = false;
-      if (e.type === 'pointerup' && moved < 5) {
-        var rect = canvas.getBoundingClientRect();
-        var i = pick(e.clientX - rect.left, e.clientY - rect.top);
-        if (i >= 0) location.href = pts[i].href;
-      }
-    }
-    canvas.addEventListener('pointerup', release);
-    canvas.addEventListener('pointercancel', release);
-    canvas.addEventListener('pointerleave', function (e) {
-      if (!dragging && !(e.relatedTarget && tip.contains(e.relatedTarget))) setHover(-1);
-    });
-    tip.addEventListener('pointerleave', function (e) {
-      if (e.relatedTarget !== canvas) setHover(-1);
-    });
-
-    // Only spend frames while the figure is on screen.
-    new IntersectionObserver(function (entries) {
-      var was = visible;
-      visible = entries[0].isIntersecting;
-      if (visible && !was && !reduce) requestAnimationFrame(frame);
-    }).observe(fig);
-
-    resize();
-    addEventListener('resize', function () { resize(); projected = draw(); });
-    projected = draw();
-    if (!reduce) requestAnimationFrame(frame);
-  })();
-</script>
-
-<script is:inline>
-  /* ── The intro ─────────────────────────────────────────────────
-     Act one, the mark alone: the pot settles and its ink rises.
-     Act two, it swoops into its place in the header, and the name of the
-     site writes itself in behind it. Act three, the field assembles, the
-     portrait is set down, the name rises, and the links arrive last.
-     Each act is a class on <html>; the styles below do the moving. */
-  (function () {
-    var html = document.documentElement;
-    var stage = document.getElementById('intro-stage');
-    var smark = stage && stage.querySelector('.intro-mark');
-    var hmark = document.querySelector('.brand-mark');
-    var replay = document.getElementById('replay');
-    if (!stage || !smark || !hmark) return;
-    var timers = [];
-    var later = function (ms, fn) { timers.push(setTimeout(fn, ms * TEMPO)); };
-    var ACTS = ['intro-run', 'landed', 'r1', 'r2', 'r3'];
-
-    // The header's own ink restarts already drawn, so the hand-off from
-    // the stage mark is seamless.
-    function settleHeaderInk() {
-      var ink = hmark.querySelector('.ink');
-      if (!ink) return;
-      ink.style.animation = 'none';
-      void ink.getBoundingClientRect();
-      ink.style.animation = '';
-      ink.style.animationDelay = '-1.3s';
-    }
-
-    /* ── The words ───────────────────────────────────────────────
-       The opening line is set once and stays alive; the word after it
-       changes, each one arriving and leaving in its own manner, until the
-       last, curiosity, which the journey is named for. Each run gets a
-       token; skipping or replaying bumps it, and anything still waiting
-       from an old run quietly stops. */
-    var inkLine = document.getElementById('ink-line');
-    var inkSlot = document.getElementById('ink-slot');
-    var brand = document.querySelector('.brand-name');
-    var nameLine = document.getElementById('ink-name-line');
-    var inkName = document.getElementById('ink-name');
-    var pre = nameLine.querySelector('.ink-pre');
-    var inkCurl = smark.querySelector('.ink');
-    var token = 0;
-    var narrow = matchMedia('(max-width: 600px)');
-    var all = function (root, sel) { return [].slice.call(root.querySelectorAll(sel)); };
-    var lead = all(inkLine, '.ink-lead .l');
-
-    /* The opening line's motion, and the pot's. "journey" (letters 12 to
-       18) carries a slow wave, and the whole line a fainter one; every word
-       sets a mood, and everything eases toward it, so nothing jumps:
-       amp, speed, sway  the wave in "journey" (em, rate, deg)
-       line, lift        the whole line's wave and its height (em)
-       spread            the letters drawing apart from the middle (em)
-       drift, jitter     the line swaying side to side, and its letters
-                         falling out of step with the baseline (em)
-       bob, lean, curl   the pot's rise and fall (px), its lean and the
-                         sway of its curl of ink (deg)
-       rock, stretch     the pot rocking (deg), the curl reaching up */
-    var MOOD_KEYS = ['amp', 'speed', 'sway', 'line', 'lift', 'spread', 'drift', 'jitter',
-                     'bob', 'lean', 'curl', 'rock', 'stretch'];
-    var moods = {
-      calm:         { amp: 0.06, speed: 1.7, sway: 0, line: 0.02, bob: 1.5, curl: 3 },
-      wonder:       { amp: 0.13, speed: 1.2, sway: 1.2, line: 0.03, spread: 0.012, drift: 0.03, bob: 3, curl: 9, rock: 3, stretch: 0.08 },
-      enthusiasm:   { amp: 0.07, speed: 2.6, sway: 0, line: 0.025, bob: 2, curl: 7, stretch: 0.05 },
-      patience:     { amp: 0.05, speed: 0.6, sway: 0, line: 0.045, lift: 0.02, spread: 0.006, bob: 3.5, curl: 6, rock: 1.5 },
-      imperfection: { amp: 0.06, speed: 1.7, sway: 0, line: 0.015, jitter: 0.035, bob: 1, lean: -4, curl: 4 },
-      honesty:      { amp: 0, speed: 1.7, sway: 0, spread: -0.004 },
-      acceptance:   { amp: 0.06, speed: 1.4, sway: 0, line: 0.02, drift: 0.015, bob: 1.5, lean: 3, curl: 4, rock: 2 },
-      hope:         { amp: 0.1, speed: 0.9, sway: 0.5, line: 0.035, lift: -0.05, spread: 0.005, bob: 4, curl: 8, stretch: 0.14 },
-      curiosity:    { amp: 0.08, speed: 1.1, sway: 0.6, line: 0.02, curl: 5 },
-      still:        { amp: 0, speed: 1.1, sway: 0 },
-    };
-    var lean = lead.map(function (l, i) { return (i * 37 % 17) - 8; });
-    var jit = lead.map(function (l, i) { return ((i * 53) % 11 - 5) / 5; });
-    var motion;
-
-    function setMood(name) {
-      if (!motion) return;
-      motion.goal = moods[name] || moods.calm;
-      motion.tiltGoal = lead.map(function (l, i) {
-        return name === 'imperfection' && i === 12 ? -10 : name === 'acceptance' ? lean[i] : 0;
-      });
-      if (name === 'enthusiasm') motion.hopAt = motion.clock + 0.2;
-    }
-
-    // A rise and fall over 0..1 that starts and ends at rest.
-    function bump(x) {
-      return x > 0 && x < 1 ? Math.pow(Math.sin(Math.PI * x), 2) : 0;
-    }
-
-    function straighten() {
-      if (motion) motion.tiltGoal = lead.map(function () { return 0; });
-    }
-
-    function move(t) {
-      motion = { amp: 0, speed: 1.7, sway: 0, line: 0, lift: 0, spread: 0, drift: 0, jitter: 0,
-                 bob: 0, lean: 0, curl: 0, rock: 0, stretch: 0,
-                 goal: moods.calm, phase: 0, clock: 0, hopAt: -9, landAt: -9, pot: true,
-                 tilt: lead.map(function () { return 0; }), tiltGoal: lead.map(function () { return 0; }) };
-      var prev = performance.now();
-      (function frame(ts) {
-        // Once the intro has let go, the stage is hidden: stop for good.
-        if (t !== token || stage.hidden) {
-          lead.forEach(function (l) { l.style.translate = l.style.rotate = ''; });
-          smark.style.translate = smark.style.rotate = inkCurl.style.rotate = inkCurl.style.scale = '';
-          return;
-        }
-        var dt = Math.min(0.05, (ts - prev) / 1000);
-        prev = ts;
-        var m = motion, k = 1 - Math.exp(-dt * 1.6), kt = 1 - Math.exp(-dt * 5);
-        MOOD_KEYS.forEach(function (key) { m[key] += ((m.goal[key] || 0) - m[key]) * k; });
-        m.phase += dt * m.speed;
-        m.clock += dt;
-        lead.forEach(function (l, i) {
-          var y = 0, r = 0;
-          if (i >= 12 && i < 19) {
-            var a = m.phase - (i - 12) * 0.5;
-            y = -m.amp * (0.5 + 0.5 * Math.sin(a));
-            r = m.sway * Math.sin(a + 1.2);
-          }
-          // One breath for the line and the pot: it starts in the middle of
-          // the line, beneath the pot, and spreads out to either end.
-          y += m.lift - m.line * (0.5 + 0.5 * Math.sin(m.phase * 0.8 - Math.abs(i - 11) * 0.3));
-          var h = (m.clock - m.hopAt - i * 0.026) / 0.7;
-          if (h > 0 && h < 1) y -= 0.22 * Math.sin(Math.PI * h) * (1 - h * 0.4);
-          // As each word lands, a small lift runs along the line toward it.
-          var g = (m.clock - m.landAt - i * 0.022) / 0.6;
-          y -= 0.05 * bump(g);
-          y += m.jitter * jit[i];
-          m.tilt[i] += (m.tiltGoal[i] - m.tilt[i]) * kt;
-          l.style.translate = (m.spread * (i - 11) + m.drift * Math.sin(m.phase * 0.5)).toFixed(4) + 'em ' + y.toFixed(4) + 'em';
-          l.style.rotate = (r + m.tilt[i]).toFixed(3) + 'deg';
-        });
-        // The pot breathes with the line, hops with enthusiasm, gives a small
-        // nod as each word lands, and its curl of ink sways in the air.
-        if (m.pot) {
-          // In time with the middle of the line (letter 11) beneath it: the
-          // same breath, the hop as it passes, the nod as the lift does.
-          var py = -m.bob * (0.5 + 0.5 * Math.sin(m.phase * 0.8));
-          var ph = (m.clock - m.hopAt - 11 * 0.026) / 0.7;
-          if (ph > 0 && ph < 1) py -= 7 * Math.sin(Math.PI * ph) * (1 - ph * 0.4);
-          py -= 3 * bump(ph - 1.05);
-          var nod = bump((m.clock - m.landAt - 11 * 0.022) / 0.6);
-          py += 2 * nod;
-          smark.style.translate = '0 ' + py.toFixed(2) + 'px';
-          smark.style.rotate = (m.lean + m.rock * Math.sin(m.phase * 0.6) + 2.5 * nod).toFixed(2) + 'deg';
-          // The curl follows a beat behind the pot, as ink would.
-          inkCurl.style.rotate = (m.curl * Math.sin(m.phase * 0.8 - 0.9) - 4 * nod).toFixed(2) + 'deg';
-          inkCurl.style.scale = '1 ' + (1 + m.stretch * (0.5 + 0.5 * Math.sin(m.phase * 0.8 - 0.9))).toFixed(4);
-        }
-        requestAnimationFrame(frame);
-      })(prev);
-    }
-
-    // Every pause and stagger is scaled by the tempo. Patience alone is
-    // never hurried, and the name keeps a slower one of its own.
-    var TEMPO = 0.66, PATIENCE_TEMPO = 0.85, NAME_TEMPO = 0.76, tempo = TEMPO;
-
-    // The styles' own animations keep the same tempo.
-    function quicken(e) {
-      e.target.getAnimations().forEach(function (a) {
-        if (a.playbackRate === 1 && (a instanceof CSSAnimation || a instanceof CSSTransition)) a.playbackRate = 1 / tempo;
-      });
-    }
-    stage.addEventListener('animationstart', quicken);
-    stage.addEventListener('transitionrun', quicken);
-
-    function wait(ms, t) {
-      return new Promise(function (res, rej) {
-        timers.push(setTimeout(function () { t === token ? res() : rej('stale'); }, ms * tempo));
-      });
-    }
-
-    // One letter after another; resolves when the last has had its turn.
-    function each(list, gap, fn, t) {
-      list.forEach(function (l, i) {
-        timers.push(setTimeout(function () { if (t === token) fn(l, i); }, i * gap * tempo));
-      });
-      return wait(Math.max(0, list.length - 1) * gap, t);
-    }
-
-    function inOrder(list, how) {
-      list = list.slice();
-      if (how === 'middle') {
-        var mid = (list.length - 1) / 2;
-        return list.map(function (l, i) { return [l, Math.abs(i - mid)]; })
-          .sort(function (a, b) { return a[1] - b[1]; })
-          .map(function (p) { return p[0]; });
-      }
-      if (how === 'scatter') {
-        return list.map(function (l, i) { return [l, (i * 7 + 3) % list.length]; })
-          .sort(function (a, b) { return a[1] - b[1]; })
-          .map(function (p) { return p[0]; });
-      }
-      return list;
-    }
-
-    var add = function (c) { return function (l) { l.classList.add(c); }; };
-
-    // How each word comes and goes. Times in ms.
-    // Between two words there is one breath, the same every time: the last
-    // word is entirely gone, and the next begins after BREATH. Wonder, the
-    // first, follows the opening line with a little more; patience takes a
-    // longer pause, because waiting is what it is.
-    var BREATH = 50;
-    var ways = {
-      wonder:       { before: 400, gap: 80, order: 'middle', settle: 700, hold: 1700, outGap: 50, out: 1100 },
-      enthusiasm:   { before: BREATH, gap: 55, tailAfter: 240, tailGap: 170, hold: 1500, outGap: 30, out: 550 },
-      patience:     { before: 250, gap: 170, tailAfter: 450, tailGap: 420, hold: 1400, outGap: 0, out: 1000 },
-      imperfection: { before: BREATH, gap: 70, settle: 600, hold: 1400, outGap: 40, out: 850 },
-      honesty:      { before: BREATH, gap: 110, typed: true, tailAfter: 250, tailGap: 0, hold: 1400, outGap: 55, out: 0 },
-      acceptance:   { before: BREATH, gap: 65, order: 'scatter', settle: 500, hold: 1700, outGap: 30, out: 650 },
-      hope:         { before: BREATH, gap: 150, settle: 800, hold: 1600, outGap: 70, out: 1100 },
-    };
-
-    // Every word sits on the line's baseline, whatever its type: when it
-    // is shown, measure where its baseline falls and lift or drop it to
-    // the line's.
-    function probe(el) {
-      var p = document.createElement('span');
-      p.className = 'bl';
-      el.appendChild(p);
-      var y = p.getBoundingClientRect().top;
-      p.remove();
-      return y;
-    }
-
-    function seat(w) {
-      w.style.bottom = '';
-      w.classList.add('on');
-      var off = probe(w) - probe(inkSlot);
-      if (Math.abs(off) > 0.5) w.style.bottom = off.toFixed(1) + 'px';
-    }
-
-    function cursorOn(w, l) {
-      all(w, '.cur').forEach(function (c) { c.classList.remove('cur'); });
-      if (l) l.classList.add('cur');
-    }
-
-    async function word(w, t) {
-      var name = w.className.match(/vw-(\w+)/)[1];
-      var how = ways[name];
-      tempo = name === 'patience' ? PATIENCE_TEMPO : TEMPO;
-      var L = all(w, '.l:not(.tail)'), T = all(w, '.tail');
-      setMood(name);
-      await wait(how.before, t);
-      seat(w);
-
-      await each(inOrder(L, how.order), how.gap, function (l) {
-        l.classList.add('in');
-        if (how.typed) cursorOn(w, l);
-      }, t);
-      if (T.length) {
-        await wait(how.tailAfter, t);
-        await each(T, how.tailGap, function (l) {
-          l.classList.add('in');
-          if (how.typed) cursorOn(w, l);
-        }, t);
-      }
-      if (how.settle) await wait(how.settle, t);
-      w.classList.add('written');
-      if (motion) motion.landAt = motion.clock;
-      straighten();
-      await wait(how.hold, t);
-
-      if (how.typed) {
-        // Deleted the way it was typed, one key at a time from the end.
-        var typed = L.concat(T).reverse();
-        await each(typed, how.outGap, function (l, i) {
-          l.classList.remove('in');
-          cursorOn(w, typed[i + 1]);
-        }, t);
-      } else {
-        // Patience is the last word: the whole line goes with it, at once.
-        if (name === 'patience') lead.slice(0, 22).forEach(add('gone'));
-        await each(inOrder(all(w, '.l.in'), how.order), how.outGap, add('go'), t);
-        // The next word waits until this one is entirely gone.
-        await wait(how.out, t);
-      }
-      tempo = TEMPO;
-      setMood('calm');
-      w.classList.remove('on', 'written');
-      all(w, '.l').forEach(function (l) { l.classList.remove('in', 'go', 'cur'); });
-    }
-
-    function resetInk() {
-      all(stage, '.ink-page .l').forEach(function (l) { l.classList.remove('in', 'go', 'cur', 'set'); });
-      all(inkSlot, '.vw').forEach(function (w) { w.classList.remove('on', 'written', 'writing'); });
-      inkLine.className = 'ink-line';
-      lead.forEach(function (l) { l.classList.remove('gone'); });
-      nameLine.classList.remove('on');
-      pre.classList.remove('leave');
-      pre.style.transition = pre.style.transform = '';
-      inkName.classList.remove('shine', 'fly');
-      inkName.style.visibility = inkName.style.transformOrigin = '';
-      inkName.getAnimations().forEach(function (a) { if (!(a instanceof CSSAnimation)) a.cancel(); });
-      all(inkName, '.nm').forEach(function (n) { n.classList.remove('writing', 'written'); });
-      pre.classList.remove('shown');
-      rings.length = 0;
-      rippleCanvas.style.transition = rippleCanvas.style.opacity = '';
-      inkCurl.getAnimations().forEach(function (a) { if (!(a instanceof CSSAnimation)) a.cancel(); });
-      inkCurl.style.strokeDasharray = '';
-      brand.style.clipPath = brand.style.opacity = brand.style.transition = '';
-      smark.classList.remove('drink');
-    }
-
-    // The slot is as wide as a typical word, so the sentence sits in the
-    // middle; a longer word runs on to the right, never off the screen.
-    // Either way the opening line keeps still.
-    function measureSlot() {
-      all(inkSlot, '.vw').forEach(function (w) { w.style.bottom = ''; });
-      if (narrow.matches) return;
-      var widths = all(inkSlot, '.vw').map(function (w) {
-        w.classList.add('on', 'written');
-        var width = w.getBoundingClientRect().width;
-        w.classList.remove('on', 'written');
-        return width;
-      });
-      var opening = inkLine.querySelector('.ink-lead').getBoundingClientRect().width;
-      var avg = widths.reduce(function (a, b) { return a + b; }, 0) / widths.length;
-      var widest = Math.max.apply(null, widths);
-      var room = opening + 2 * widest + 48 - innerWidth;
-      inkSlot.style.width = Math.ceil(Math.min(widest, Math.max(avg, room))) + 'px';
-    }
-
-    async function play(t) {
-      tempo = TEMPO;
-      resetInk();
-      measureSlot();
-      var words = all(inkSlot, '.vw');
-
-      // "This is the journey of", once, and then it never quite sits still.
-      await wait(1400, t);
-      move(t);
-      await each(lead, 55, add('in'), t);
-      await wait(700, t);
-      lead.forEach(add('set'));
-      await wait(700, t);
-
-      for (var i = 0; i < words.length; i++) await word(words[i], t);
-
-      // And last, the name, revealed once, at its own slower tempo. Patience
-      // has just made the wait, so the line lets go at once, leaving only
-      // the pot on an empty page, and the name follows on its breath.
-      tempo = NAME_TEMPO;
-      setMood('still');
-      smark.classList.add('drink');
-      // The old line went with patience, so the name follows at once.
-      await wait(200, t);
-
-      // Then "This is the", and the name written beneath it in one slow
-      // stroke, while the pot's ink is drawn out of it into the pen. The
-      // ink is wet: echoes of the pot's own outline open out of it as it
-      // gives up its ink, and echoes of the letters lift off the stroke as
-      // the pen lays them down.
-      var stroke = inkName.querySelector('.nm');
-      var em = inkName.querySelector('em');
-      var curl = inkCurl.getTotalLength();
-      nameLine.classList.add('on');
-      pre.classList.add('shown');
-      await wait(500, t);
-
-      inkCurl.style.strokeDasharray = curl;
-      stroke.classList.add('writing');
-      inkCurl.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: curl }], {
-        duration: 3500 * tempo, easing: 'cubic-bezier(0.4, 0.05, 0.3, 1)', fill: 'forwards'
-      });
-      [0, 900, 1800].forEach(function (d) {
-        timers.push(setTimeout(potEcho, d * tempo));
-      });
-      followPen(stroke, em, t);
-      await wait(3500, t);
-      stroke.classList.replace('writing', 'written');
-
-      // It is underlined, the whole name gives off one echo of itself,
-      // and the pot fills again.
-      inkName.classList.add('shine');
-      textEcho(em, null, 0.05, 0.6);
-      inkCurl.animate([{ strokeDashoffset: curl }, { strokeDashoffset: 0 }], {
-        duration: 1600 * tempo, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards'
-      });
-      timers.push(setTimeout(potEcho, 1500 * tempo));
-      await wait(1500, t);
-
-      // Then it flies home, and lands as the header's name with the mark.
-      pre.classList.add('leave');
-      inkName.classList.add('fly');
-      await wait(200, t);
-      fly(inkName);
-      swoop();
-    }
-
-    /* Echoes of wet ink. Each ripple has the shape of what made it, the
-       pot's outline or the letters' own, and opens outward from it,
-       growing a little and fading to nothing. Drawn on a canvas beneath
-       the words: a soft band with a fine line at its crest. */
-    var rippleCanvas = stage.querySelector('.ink-ripples');
-    var rctx = rippleCanvas.getContext('2d');
-    var rings = [], rippling = false;
-    var POT_SHAPE = new Path2D(
-      'M39.2 94 C29.6 94 28.4 79.6 36.8 72.4 C40.4 69.4 41.6 67.6 41.6 64 L58.4 64 C58.4 67.6 59.6 69.4 63.2 72.4 C71.6 79.6 70.4 94 60.8 94 Z ' +
-      'M42.8 64 L42.8 59.2 L57.2 59.2 L57.2 64 Z');
-
-    function echo(cx, cy, grow, strength, paint) {
-      for (var i = 0; i < 2; i++) {
-        rings.push({
-          cx: cx, cy: cy, grow: grow * (1 - i * 0.4), paint: paint,
-          t0: performance.now() + i * 150 * tempo,
-          life: (1200 + i * 150) * tempo,
-          a: strength * (1 - i * 0.45)
-        });
-      }
-      if (!rippling) { rippling = true; requestAnimationFrame(drawRipples); }
-    }
-
-    // The pot's own outline, opening out of it.
-    function potEcho() {
-      var m = smark.getBoundingClientRect(), u = m.width / 56;
-      var cx = m.left + (50 - 22) * u, cy = m.top + (79 - 2) * u;
-      echo(cx, cy, 0.55, 0.8, function (c, lw) {
-        c.translate(m.left, m.top);
-        c.scale(u, u);
-        c.translate(-22, -2);
-        c.lineWidth = lw / u;
-        c.stroke(POT_SHAPE);
-      });
-    }
-
-    // The letters' own outline, set exactly over the words (their font,
-    // their baseline), optionally only the part between x0 and x1.
-    function textEcho(el, part, grow, strength) {
-      var b = el.getBoundingClientRect(), cs = getComputedStyle(el);
-      var probe = document.createElement('span');
-      probe.className = 'bl';
-      el.appendChild(probe);
-      var base = probe.getBoundingClientRect().top;
-      probe.remove();
-      var x = b.left + parseFloat(cs.paddingLeft);
-      var font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-      var text = el.textContent.replace(/\s+/g, ' ').trim();
-      var cx = part ? (part[0] + part[1]) / 2 : b.left + b.width / 2;
-      echo(cx, base - parseFloat(cs.fontSize) * 0.3, grow, strength, function (c, lw) {
-        if (part) {
-          c.beginPath();
-          c.rect(part[0], b.top - b.height, part[1] - part[0], b.height * 3);
-          c.clip();
-        }
-        c.font = font;
-        c.textBaseline = 'alphabetic';
-        c.lineWidth = lw;
-        c.strokeText(text, x, base);
-      });
-    }
-
-    function drawRipples(now) {
-      var dpr = Math.min(devicePixelRatio || 1, 2);
-      var W = innerWidth, H = innerHeight;
-      if (rippleCanvas.width !== Math.round(W * dpr) || rippleCanvas.height !== Math.round(H * dpr)) {
-        rippleCanvas.width = Math.round(W * dpr);
-        rippleCanvas.height = Math.round(H * dpr);
-      }
-      rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      rctx.clearRect(0, 0, W, H);
-      rctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
-      rctx.lineJoin = 'round';
-      rings = rings.filter(function (g) { return now - g.t0 < g.life; });
-      rings.forEach(function (g) {
-        var k = (now - g.t0) / g.life;
-        if (k < 0) return;
-        var e = 1 - Math.pow(1 - k, 3);
-        var sc = 1 + g.grow * e;
-        var fade = Math.pow(1 - k, 1.6) * g.a;
-        [[fade * 0.22, (1.5 + 4 * e) / sc], [fade * 0.75, 1 / sc]].forEach(function (pass) {
-          rctx.save();
-          rctx.globalAlpha = pass[0];
-          rctx.translate(g.cx, g.cy);
-          rctx.scale(sc, sc);
-          rctx.translate(-g.cx, -g.cy);
-          g.paint(rctx, pass[1]);
-          rctx.restore();
-        });
-      });
-      rctx.globalAlpha = 1;
-      if (rings.length) requestAnimationFrame(drawRipples);
-      else { rippling = false; rctx.clearRect(0, 0, W, H); }
-    }
-
-    // The point of the pen is the edge of the stroke's mask: the mask is
-    // 2.6 times the stroke's width, with its edge at the middle, and moves
-    // from 100% to 0%, so the edge runs from -0.3 to 1.3 of the width.
-    // While the pen is writing the coloured word, every little while the
-    // letters just behind it give off an echo.
-    function followPen(el, word, t) {
-      var b = el.getBoundingClientRect(), w = word.getBoundingClientRect();
-      var reach = parseFloat(getComputedStyle(el).fontSize) * 0.9;
-      var last = 0;
-      (function step(now) {
-        if (t !== token || !el.classList.contains('writing')) return;
-        var pos = parseFloat(getComputedStyle(el).webkitMaskPosition || getComputedStyle(el).maskPosition) / 100;
-        var x = b.left + (1.3 - 1.6 * pos) * b.width;
-        if (x > w.left && x < w.right + reach * 0.3 && now - last > 170 * tempo) {
-          last = now;
-          textEcho(word, [Math.max(w.left, x - reach), x], 0.08, 0.5);
-        }
-        requestAnimationFrame(step);
-      })(performance.now());
-    }
-
-    // The flight of the name. It is set in the header's own hand, so it
-    // only has to move and shrink; the real name takes over the moment it
-    // lands.
-    function fly(el) {
-      var a = el.getBoundingClientRect(), b = brand.getBoundingClientRect();
-      var k = b.width / a.width;
-      var dx = (b.left + b.width / 2) - (a.left + a.width / 2);
-      var dy = (b.top + b.height / 2) - (a.top + a.height / 2);
-      el.style.transformOrigin = '50% 50%';
-      brand.style.transition = 'none';
-      brand.style.clipPath = 'none';
-      brand.style.opacity = '0';
-      var flight = el.animate([
-        { transform: 'none' },
-        { transform: 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(' + k.toFixed(4) + ')' }
-      ], { duration: 1400 * tempo, easing: 'cubic-bezier(0.76, 0, 0.18, 1)', fill: 'forwards' });
-      flight.onfinish = function () {
-        brand.style.opacity = '1';
-        el.style.visibility = 'hidden';
-      };
-    }
-
-    function finish() {
-      brand.style.clipPath = brand.style.opacity = brand.style.transition = '';
-      // The page has already been revealed; its own fade-in must not
-      // replay when the intro lets go of it.
-      document.querySelector('main').style.animation = 'none';
-      html.classList.remove('intro');
-      ACTS.forEach(function (c) { html.classList.remove(c); });
-      stage.hidden = true;
-    }
-
-    function swoop() {
-      if (motion) motion.pot = false;
-      // The ripples belong to the page, not the mark: they go as it leaves.
-      rippleCanvas.style.transition = 'opacity 0.35s ease';
-      rippleCanvas.style.opacity = '0';
-      timers.push(setTimeout(function () { rings.length = 0; }, 400));
-      smark.style.translate = smark.style.rotate = inkCurl.style.rotate = inkCurl.style.scale = '';
-      var a = smark.getBoundingClientRect(), b = hmark.getBoundingClientRect();
-      var dx = (b.left + b.width / 2) - (a.left + a.width / 2);
-      var dy = (b.top + b.height / 2) - (a.top + a.height / 2);
-      var k = b.height / a.height;
-      var flight = smark.animate([
-        { transform: 'translate(0, 0) scale(1)' },
-        { transform: 'translate(' + dx + 'px, ' + dy + 'px) scale(' + k + ')' }
-      ], { duration: 1400 * tempo, easing: 'cubic-bezier(0.76, 0, 0.18, 1)', fill: 'forwards' });
-      flight.onfinish = function () {
-        settleHeaderInk();
-        html.classList.add('landed');
-        // The mark is now the header's; the stage stays up only for Skip.
-        smark.style.visibility = 'hidden';
-        flight.cancel();
-      };
-      later(950, function () { html.classList.add('r1'); });
-      later(1300, function () { if (window.fieldIntro) window.fieldIntro(); });
-      later(2500, function () { html.classList.add('r2'); });
-      later(3600, function () { html.classList.add('r3'); });
-      later(6600, finish);
-    }
-
-    // Straight to the finished page, from wherever the intro had got to.
-    function skip() {
-      if (!html.classList.contains('intro')) return;
-      timers.forEach(clearTimeout);
-      timers = [];
-      token++;
-      smark.getAnimations().forEach(function (a) { a.cancel(); });
-      if (window.fieldDone) window.fieldDone();
-      settleHeaderInk();
-      finish();
-    }
-    var skipBtn = document.getElementById('intro-skip');
-    if (skipBtn) skipBtn.addEventListener('click', skip);
-    addEventListener('keydown', function (e) { if (e.key === 'Escape') skip(); });
-
-    function run() {
-      timers.forEach(clearTimeout);
-      timers = [];
-      token++;
-      ACTS.forEach(function (c) { html.classList.remove(c); });
-      smark.getAnimations().forEach(function (a) { a.cancel(); });
-      html.classList.add('intro');
-      if (window.fieldHold) window.fieldHold();
-      scrollTo(0, 0);
-      stage.hidden = false;
-      smark.style.visibility = '';
-      void stage.getBoundingClientRect();
-      html.classList.add('intro-run');
-      play(token).catch(function () {});
-    }
-
-    if (html.classList.contains('intro')) {
-      // Fonts first, so the name is written in its own hand, not a stand-in.
-      var go = function () { requestAnimationFrame(run); };
-      if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise(function (r) { setTimeout(r, 1200); })]).then(go);
-      else go();
-    } else {
-      stage.hidden = true;
-    }
-
-    if (replay) replay.addEventListener('click', function () {
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      run();
-    });
-  })();
-</script>
-
 <style>
-  .home {
-    max-width: none;
+  :global(body:has(.ab) main) { padding-top: 0; padding-bottom: 0; }
+  .ab { margin-inline: calc(-1 * var(--axis)); }
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
-  /* One screen and nothing else: the field fills it, the name sits in
-     the lower left corner of the frame. */
-  /* Exactly one screen: the visible viewport (dvh follows the phone's
-     address bar as it shows and hides) less the header, whose real height
-     the layout measures into --head-h. */
-  :global(body:has(.home) main) {
-    padding-top: 0;
-    padding-bottom: 0;
+  /* About a third of a screen of scroll per sentence; one screen of
+     picture, pinned. */
+  .stage { position: relative; height: 380vh; height: 380svh; }
+  .pin {
+    position: sticky;
+    top: var(--head-h, 4.5rem);
+    height: calc(100vh - var(--head-h, 4.5rem));
+    height: calc(100svh - var(--head-h, 4.5rem));
+    overflow: hidden;
   }
-
-  .hero {
-    position: relative;
-    height: calc(100vh - var(--head-h, 4rem));
-    height: calc(100dvh - var(--head-h, 4rem));
-    min-height: 420px;
-    margin: 0 calc(var(--axis) * -1);
-  }
-
-  .field {
+  #pts {
     position: absolute;
     inset: 0;
-    margin: 0;
-  }
-
-  .field canvas {
     display: block;
     width: 100%;
     height: 100%;
-    cursor: grab;
-    touch-action: pan-y;
-    /* The field fades out toward the edges instead of being cut off by
-       the screen, as if seen through a lens. */
-    -webkit-mask-image: radial-gradient(ellipse 82% 90% at 60% 45%, #000 64%, transparent 100%);
-    mask-image: radial-gradient(ellipse 82% 90% at 60% 45%, #000 64%, transparent 100%);
   }
 
-  .hero-text {
+  .act {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* ── Who: the first screen's left side ── */
+  .who {
     position: absolute;
     left: var(--axis);
     bottom: var(--space-2xl);
     z-index: 2;
+    opacity: 0;
+    transform: translateY(var(--space-4));
+    /* Leaving is quick, so it is gone before the act's words arrive in the
+       same corner; arriving waits for whatever was there to leave. */
+    transition: opacity var(--dur-fast) ease, transform var(--dur-fast) ease;
     pointer-events: none;
   }
-
-  .hero-text a {
+  .who.on {
+    opacity: 1;
+    transform: none;
     pointer-events: auto;
+    transition: opacity 0.6s var(--ease-out) var(--dur-base), transform 0.6s var(--ease-out) var(--dur-base);
   }
-
-  /* A small print of the author, pinned above the name: greyscale like
-     the rest of the sheet until you look at it. */
-  .portrait {
-    position: relative;
+  .who-print {
     display: block;
-    width: clamp(104px, 10vw, 140px);
-    aspect-ratio: 4 / 5;
-    margin: 0 0 var(--space-xl) var(--space-xs);
+    width: clamp(6.5rem, 9vw, 8.75rem);
+    margin: 0 0 var(--space-xl) var(--space-1);
     padding: var(--space-1-5) var(--space-1-5) var(--space-4);
     background: var(--color-raised);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-lift);
     transform: rotate(-2.5deg);
-    pointer-events: auto;
     transition: transform 0.6s var(--ease-out);
   }
-
-  .portrait:hover {
-    transform: rotate(0deg) translateY(-3px);
-  }
-
-  .portrait img {
+  .who-print:hover { transform: rotate(0deg) translateY(calc(-1 * var(--space-1))); }
+  .who-print img {
     display: block;
     width: 100%;
-    height: 100%;
+    height: auto;
     aspect-ratio: 4 / 5;
     object-fit: cover;
     border-radius: var(--radius-sm);
     filter: grayscale(1) contrast(1.08);
     transition: filter 0.7s ease;
     user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
     -webkit-user-drag: none;
-    pointer-events: none;
   }
-
-  .portrait:hover img {
-    filter: none;
-  }
-
-  .portrait-guard {
-    position: absolute;
-    inset: 0;
-  }
-
-  /* The name is the shared mast (global .mast-title); only its spacing
-     and the italic's overhang are set here. */
-  .hero h1 {
-    margin-bottom: var(--space-lg);
-    padding-right: 0.22em;
-    white-space: nowrap;
-  }
-
-  /* The links sit on a hairline, each with a small arrow; an underline
-     draws itself under the one you reach for. */
-  .hero-role {
+  .who-print:hover img { filter: none; }
+  .who-name { white-space: nowrap; padding-right: 0.22em; }
+  .who-role {
+    margin: var(--space-4) 0 var(--space-lg);
     font-family: var(--font-serif);
     font-style: italic;
     font-size: var(--fs-body);
-    line-height: var(--lh-ui);
     color: var(--color-text-secondary);
-    /* Tucked up under the name, which sets its own space below. */
-    margin: calc(-1 * var(--space-lg) + var(--space-1-5)) 0 var(--space-lg);
   }
-
-  .hero-links {
+  .who-links {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1-5) var(--space-6);
     margin: 0;
     padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
     width: fit-content;
     min-width: min(100%, 22rem);
-    position: relative;
   }
-
-  .hero-links::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--color-border);
-    transform-origin: 0 50%;
-  }
-
-  .hero-links a {
+  .who-links a {
     display: inline-flex;
-    align-items: baseline;
     gap: var(--space-1);
     font-family: var(--font-mono);
     font-size: var(--fs-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
     color: var(--color-text-secondary);
-    padding: var(--space-1-5) 0;
+    text-decoration: none;
     transition: color var(--dur-base) ease;
   }
+  .who-links a span { color: var(--color-accent); }
+  .who-links a:hover { color: var(--color-accent); text-decoration: none; }
 
-  .hl-text {
-    background: linear-gradient(currentColor, currentColor) 0 100% / 0% 1px no-repeat;
-    padding-bottom: var(--space-0-5);
-    transition: background-size var(--dur-slow) var(--ease-out);
-  }
 
-  .hl-arrow {
-    font-size: var(--fs-label);
-    color: var(--color-accent);
-    transition: transform var(--dur-slow) var(--ease-out);
-  }
-
-  .hero-links a:hover {
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .hero-links a:hover .hl-text {
-    background-size: 100% 1px;
-  }
-
-  .hero-links a:hover .hl-arrow {
-    transform: translate(2px, -2px);
-  }
-
-  .field-cap {
+  /* ── The acts: composed as a spread ──
+     Wide screens: the sentence in a left column on the axis, centred in
+     the height; the picture centred in the space to its right. A hairline
+     strip along the foot carries where you are (left) and the cue to
+     scroll (right). Phones: the picture in the top half, the sentence
+     always starting at the same height below it, the marks just above. */
+  .act-text {
     position: absolute;
-    right: var(--axis);
-    bottom: var(--space-2xl);
-    margin: 0;
-    pointer-events: none;
-  }
-
-  .field-tip {
-    position: absolute;
+    left: var(--axis);
     top: 0;
-    left: 0;
-    max-width: 240px;
+    bottom: 0;
+    /* Centred in the height by flex, which every browser handles. */
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
-    padding: var(--space-2) var(--space-3) var(--space-2);
-    background: color-mix(in srgb, var(--color-raised) 88%, transparent);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--color-border);
-    border-left: 2px solid var(--color-accent);
-    box-shadow: var(--shadow-soft);
-    color: var(--color-text);
-    text-decoration: none;
-    z-index: 3;
+    justify-content: center;
+    width: min(28rem, 34vw);
+    opacity: 0;
+    transform: translateY(var(--space-3));
+    transition: opacity var(--dur-fast) ease, transform var(--dur-fast) ease;
+  }
+  .act.on .act-text {
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.7s var(--ease-out) var(--dur-base), transform 0.7s var(--ease-out) var(--dur-base);
   }
 
-  .field-tip[hidden] {
-    display: none;
-  }
-
-  .field-tip:hover {
-    text-decoration: none;
-    color: var(--color-text);
-  }
-
-  .field-tip-title {
-    font-family: var(--font-serif);
-    font-size: var(--fs-ui);
+  .act-say {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: var(--fw-light);
     line-height: var(--lh-snug);
+    letter-spacing: var(--track-snug);
+    text-wrap: pretty;
+    color: var(--color-text);
+    /* Paper feathered under the words, so no point crosses them. */
+    text-shadow: 0 0 var(--space-4) var(--color-bg), 0 0 var(--space-2) var(--color-bg), 0 0 var(--space-1) var(--color-bg);
   }
 
-
-  @media (max-width: 760px) {
-    .field-cap {
-      display: none;
-    }
-
-    .field canvas {
-      -webkit-mask-image: radial-gradient(ellipse 85% 62% at 50% 36%, #000 55%, transparent 100%);
-      mask-image: radial-gradient(ellipse 85% 62% at 50% 36%, #000 55%, transparent 100%);
-    }
-
-    .hero-links {
-      gap: var(--space-1) var(--space-5);
-    }
-  }
-  /* ── The name, word by word ────────────────────────────── */
-  /* Each word sits in its own box so it can rise from behind a baseline.
-     The box is generous on every side (the italic overhangs, the tall
-     ascenders, the descenders) and it only clips while the word is rising;
-     outside the intro nothing is ever cut. */
-  .hero h1 .w {
-    display: inline-block;
-    vertical-align: bottom;
-    padding: 0.25em 0.2em 0.22em;
-    margin: -0.25em -0.2em -0.22em;
-  }
-
-  :global(html.intro) .hero h1 .w {
-    overflow: hidden;
-  }
-
-  .hero h1 .w > * {
-    display: inline-block;
-  }
-
-  /* ── The quiet replay control ──────────────────────────── */
-  .replay {
+  .act-hint {
     position: absolute;
     right: var(--axis);
-    bottom: calc(var(--space-2xl) - 0.55rem);
-    z-index: 3;
-    width: 34px;
-    height: 34px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--color-border);
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: color var(--dur-base) ease, border-color var(--dur-base) ease, opacity 0.9s ease;
-  }
-
-  .replay svg {
-    width: 15px;
-    height: 15px;
-    transition: transform 0.7s var(--ease-out);
-  }
-
-  .replay:hover {
-    color: var(--color-accent);
-    border-color: var(--color-accent);
-  }
-
-  .replay:hover svg {
-    transform: rotate(-200deg);
-  }
-
-  .replay::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-  }
-
-  .field-cap {
-    right: calc(var(--axis) + 50px) !important;
-  }
-
-  @media (max-width: 760px) {
-    .replay {
-      top: 0.9rem;
-      bottom: auto;
-    }
-  }
-
-  /* ── The stage ─────────────────────────────────────────── */
-  .intro-stage {
-    position: fixed;
-    inset: 0;
-    max-width: none !important;
-    margin: 0 !important;
-    z-index: var(--z-intro);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-6);
-    /* While it plays, the stage takes every touch and hover, so nothing
-       underneath it reacts. */
-    pointer-events: auto;
-    cursor: default;
-  }
-
-  .intro-stage[hidden] {
-    display: none;
-  }
-
-  .intro-mark {
-    width: 64px;
-    height: 110px;
-    color: var(--color-accent);
-    overflow: visible;
-    will-change: transform;
-    transition: color 0.7s ease;
-  }
-
-  .intro-mark .pot {
-    fill: var(--color-bg);
-  }
-
-  .intro-mark .vessel {
-    transform-origin: 50% 94%;
-    opacity: 0;
-  }
-
-  .intro-mark .ink {
-    transform-box: fill-box;
-    transform-origin: 45% 100%;
-    stroke-dasharray: 120;
-    stroke-dashoffset: 120;
-  }
-
-  :global(html.intro-run) .intro-mark .vessel {
-    animation: vessel-in 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
-  }
-
-  :global(html.intro-run) .intro-mark .ink {
-    animation: ink-in 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.7s forwards;
-  }
-
-  @keyframes vessel-in {
-    from { opacity: 0; transform: translateY(10px) scale(0.86); }
-    to   { opacity: 1; transform: none; }
-  }
-
-  @keyframes ink-in {
-    to { stroke-dashoffset: 0; }
-  }
-
-  /* ── What waits for its cue ────────────────────────────── */
-  :global(html.intro main) {
-    animation: none;
-  }
-
-  /* While it plays there is only the stage: nothing to scroll to, and no
-     footer peeking in below. */
-  :global(html.intro),
-  :global(html.intro body) {
-    overflow: hidden;
-  }
-
-  :global(html.intro footer),
-  :global(html.intro .read-progress) {
-    visibility: hidden;
-  }
-
-  /* The sign-off belongs to the essays, not this page. */
-  :global(.foot-line) {
-    display: none;
-  }
-
-  :global(html.intro .viewfinder),
-  :global(html.intro .brand-mark),
-  :global(html.intro .brand-role) {
-    opacity: 0;
-  }
-
-  :global(html.intro .brand-name) {
-    clip-path: inset(-60% 112% -60% -12%);
-  }
-
-  :global(html.intro .nav-links > *) {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-
-  :global(html.intro) .portrait {
-    opacity: 0;
-    transform: translateY(28px) rotate(-11deg) scale(0.94);
-  }
-
-  :global(html.intro) .hero h1 .w > * {
-    transform: translateY(150%);
-  }
-
-  :global(html.intro) .hero-links::before {
-    transform: scaleX(0);
-  }
-
-  :global(html.intro) .hero-links a,
-  :global(html.intro) .hero-role,
-  :global(html.intro) .field-cap,
-  :global(html.intro) .replay {
-    opacity: 0;
-  }
-
-  :global(html.intro) .hero-links a {
-    transform: translateY(8px);
-  }
-
-  /* Act two: the mark lands, and the name of the site writes itself in. */
-  :global(html.intro.landed .brand-mark) {
-    opacity: 1;
-  }
-
-  :global(html.intro.r1 .brand-name) {
-    clip-path: inset(-60% -12% -60% -12%);
-    transition: clip-path 1.8s cubic-bezier(0.65, 0, 0.35, 1);
-  }
-
-  :global(html.intro.r1 .brand-role) {
-    opacity: 1;
-    transition: opacity 0.9s ease 0.9s;
-  }
-
-  :global(html.intro.r1 .nav-links > *) {
-    opacity: 1;
-    transform: none;
-    transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  :global(html.intro.r1 .nav-links > :nth-child(1)) { transition-delay: 0.45s; }
-  :global(html.intro.r1 .nav-links > :nth-child(2)) { transition-delay: 0.53s; }
-  :global(html.intro.r1 .nav-links > :nth-child(3)) { transition-delay: 0.61s; }
-  :global(html.intro.r1 .nav-links > :nth-child(4)) { transition-delay: 0.69s; }
-  :global(html.intro.r1 .nav-links > :nth-child(5)) { transition-delay: 0.77s; }
-  :global(html.intro.r1 .nav-links > :nth-child(6)) { transition-delay: 0.85s; }
-
-  /* Act three: the print is set down, the name rises, the links arrive. */
-  :global(html.intro.r2) .portrait {
-    opacity: 1;
-    transform: rotate(-2.5deg);
-    transition: opacity 1s ease, transform 1.9s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  :global(html.intro.r2) .hero h1 .w > * {
-    transform: none;
-    transition: transform 1.7s cubic-bezier(0.16, 1, 0.3, 1) var(--dur-slow);
-  }
-
-  :global(html.intro.r2) .hero h1 .w + .w > * {
-    transition-delay: 0.65s;
-  }
-
-  :global(html.intro.r3) .hero-links::before {
-    transform: none;
-    transition: transform 1.5s cubic-bezier(0.65, 0, 0.35, 1);
-  }
-
-  :global(html.intro.r3) .hero-links a {
-    opacity: 1;
-    transform: none;
-    transition: opacity 1s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  /* The line under the name arrives with the links, after the intro. */
-  :global(html.intro.r3) .hero-role {
-    opacity: 1;
-    transition: opacity 0.8s ease var(--dur-slow);
-  }
-
-  :global(html.intro.r3) .hero-links a:nth-child(1) { transition-delay: 0.5s; }
-  :global(html.intro.r3) .hero-links a:nth-child(2) { transition-delay: 0.62s; }
-  :global(html.intro.r3) .hero-links a:nth-child(3) { transition-delay: 0.74s; }
-  :global(html.intro.r3) .hero-links a:nth-child(4) { transition-delay: 0.86s; }
-
-  :global(html.intro.r3) .field-cap {
-    opacity: 1;
-    transition: opacity 1.3s ease 1.2s;
-  }
-
-  :global(html.intro.r3 .viewfinder) {
-    opacity: 1;
-    transition: opacity 1.2s ease 0.6s;
-  }
-  /* ── What is written ───────────────────────────────────────
-     The opening line is set once and stays alive; the word after it
-     changes, each one arriving and leaving in its own manner. The script
-     says when; these say how. */
-  .ink-page {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    width: min(94vw, 60rem);
-  }
-
-  .ink-line {
-    grid-area: 1 / 1;
+    bottom: var(--space-xl);
     margin: 0;
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    white-space: nowrap;
-    font-family: var(--font-display);
-    color: var(--color-text);
-    transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 1.2s ease, filter 1.2s ease, translate 1.2s ease;
-  }
-
-  .ink-lead {
-    font-style: italic;
-    font-weight: var(--fw-light);
-    font-size: var(--fs-h2);
-    letter-spacing: var(--track-normal);
-    color: var(--color-text-secondary);
-  }
-
-  /* The slot keeps the width of the widest word, so the opening line
-     never shifts as the word after it changes. */
-  .ink-slot {
-    position: relative;
-    display: inline-block;
-    text-align: left;
-    font-size: var(--fs-h1);
-    font-weight: var(--fw-light);
-    letter-spacing: var(--track-tight);
-    margin-left: 0.18em;
-  }
-
-  .ink-slot .vw {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    display: none;
-    white-space: nowrap;
-  }
-
-  .ink-slot .vw.on {
-    display: inline-block;
-  }
-
-  /* A strut gives the slot its baseline. */
-  .ink-slot::after {
-    content: '\00a0';
-  }
-
-  /* Safari cuts a filtered or animated letter off at its own box, and
-     italic and script letters reach past theirs. Each letter gets room
-     to spare, given back by the margin so the setting is unchanged. */
-  .ink-page .l {
-    display: inline-block;
-    opacity: 0;
-    padding: 0.25em 0.18em 0.3em;
-    margin: -0.25em -0.18em -0.3em;
-  }
-
-  /* Arriving, by default: rising out of a soft blur. */
-  .ink-page .l.in {
-    opacity: 1;
-    animation: rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  @keyframes rise {
-    from { opacity: 0; filter: blur(6px); transform: translateY(0.35em); }
-    to   { opacity: 1; filter: blur(0); transform: none; }
-  }
-
-  /* Leaving, by default: a quiet fade. */
-  .ink-slot .vw .l.in.go {
-    animation: fade-out 0.7s ease both;
-  }
-
-  @keyframes fade-out {
-    to { opacity: 0; filter: blur(3px); }
-  }
-
-  /* ── The opening line, alive ───────────────────────────────
-     Once it has risen it stays, but it is never still. Its motion is one
-     continuous loop in the script, so it can answer each word without
-     ever jumping. */
-  .ink-page .ink-lead .l.in.set {
-    opacity: 1;
-    animation: none;
-  }
-
-  /* ── Each word ─────────────────────────────────────────── */
-
-  /* wonder: blooms out of a haze, larger than itself, and then its
-     letters drift apart; it leaves as a breath. */
-  .ink-slot .vw-wonder {
-    font-weight: var(--fw-display);
-    transition: letter-spacing 2.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .ink-slot .vw-wonder.written {
-    letter-spacing: var(--track-caps);
-  }
-
-  .ink-slot .vw-wonder .l.in {
-    animation: bloom 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .ink-slot .vw-wonder .l.in.go {
-    animation: exhale 1.2s ease both;
-  }
-
-  @keyframes bloom {
-    from { opacity: 0; filter: blur(12px); transform: scale(1.7); }
-    to   { opacity: 1; filter: blur(0); transform: none; }
-  }
-
-  @keyframes exhale {
-    to { opacity: 0; filter: blur(10px); transform: translateY(-0.4em) scale(1.15); }
-  }
-
-  /* enthusiasm!! heavy, bright, every letter springing up, and gone in a
-     leap. */
-  .ink-slot .vw-enthusiasm {
-    font-weight: var(--fw-bold);
-    font-style: italic;
-    letter-spacing: var(--track-tight);
-    color: var(--color-accent);
-  }
-
-  .ink-slot .vw-enthusiasm .l.in {
-    animation: spring 0.6s cubic-bezier(0.34, 1.8, 0.5, 1) both;
-  }
-
-  .ink-slot .vw-enthusiasm .tail.in {
-    font-size: 1.1em;
-    animation: bang 0.55s cubic-bezier(0.34, 2, 0.5, 1) both;
-  }
-
-  .ink-slot .vw-enthusiasm .l.in.go {
-    animation: leap 0.5s cubic-bezier(0.5, 0, 0.75, 0) both;
-  }
-
-  @keyframes spring {
-    from { opacity: 0; transform: translateY(0.6em) scale(0.5); }
-    to   { opacity: 1; transform: none; }
-  }
-
-  @keyframes bang {
-    from { opacity: 0; transform: translateY(0.4em) scale(0.2) rotate(-25deg); }
-    to   { opacity: 1; transform: rotate(10deg); }
-  }
-
-  @keyframes leap {
-    from { opacity: 1; transform: none; }
-    to   { opacity: 0; transform: translateY(-0.9em) rotate(10deg); }
-  }
-
-  /* patience... each letter takes its time, the dots longer still. */
-  .ink-slot .vw-patience {
-    font-style: italic;
-  }
-
-  .ink-slot .vw-patience .l.in {
-    animation: settle-slow 1.8s ease both;
-  }
-
-  .ink-slot .vw-patience .tail {
-    color: var(--color-accent);
-  }
-
-  .ink-slot .vw-patience .l.in.go {
-    animation: fade-out 1.1s ease both;
-  }
-
-  @keyframes settle-slow {
-    from { opacity: 0; filter: blur(4px); transform: translateY(0.12em); }
-    to   { opacity: 1; filter: blur(0); transform: none; }
-  }
-
-  /* imperfection: the letters drop into place; one lands wrong and stays
-     wrong. They leave by falling, each at its own angle. */
-  .ink-slot .vw-imperfection .l.in {
-    animation: drop 0.8s cubic-bezier(0.34, 1.5, 0.5, 1) both;
-  }
-
-  .ink-slot .vw-imperfection .odd.in {
-    color: var(--color-accent);
-    transform: translateY(0.06em) rotate(9deg);
-    animation: misstep 1.1s cubic-bezier(0.34, 1.5, 0.5, 1) both;
-  }
-
-  .ink-slot .vw-imperfection .l.in.go {
-    animation: tumble 0.9s cubic-bezier(0.5, 0, 0.75, 0) both;
-  }
-
-  @keyframes drop {
-    from { opacity: 0; transform: translateY(-0.5em); }
-    to   { opacity: 1; transform: none; }
-  }
-
-  @keyframes misstep {
-    0%   { opacity: 0; transform: translateY(-0.6em) rotate(-20deg); }
-    60%  { opacity: 1; transform: translateY(0.14em) rotate(15deg); }
-    100% { opacity: 1; transform: translateY(0.06em) rotate(9deg); }
-  }
-
-  @keyframes tumble {
-    to { opacity: 0; transform: translateY(0.6em) rotate(calc(var(--r) * 3)); }
-  }
-
-  /* A probe for where a line's baseline is. */
-  :global(.bl) {
-    display: inline-block;
-    width: 0;
-    height: 0;
-  }
-
-  /* HONESTY. typed, key by key, with nothing to soften it, and deleted
-     the same way. */
-  .ink-slot .vw-honesty {
     font-family: var(--font-mono);
-    font-weight: var(--fw-regular);
-    font-size: 0.6em;
+    font-size: var(--fs-label);
+    line-height: var(--lh-none);
     letter-spacing: var(--track-caps);
     text-transform: uppercase;
-  }
-
-  .ink-slot .vw-honesty .l {
-    position: relative;
-  }
-
-  .ink-slot .vw-honesty .l.in {
-    animation: none;
-  }
-
-  .ink-slot .vw-honesty .l.cur::after {
-    content: '';
-    position: absolute;
-    left: calc(100% - 0.3em);
-    bottom: 0.35em;
-    width: 0.1em;
-    height: 1em;
-    background: var(--color-accent);
-    opacity: 1;
-    animation: caret 0.9s steps(1) infinite;
-  }
-
-  @keyframes caret {
-    0%, 49%   { opacity: 1; }
-    50%, 100% { opacity: 0; }
-  }
-
-  /* hope: rises like first light, warm with it, and leaves by floating
-     up. */
-  .ink-slot .vw-hope {
-    font-style: italic;
-    font-weight: var(--fw-light);
-  }
-
-  .ink-slot .vw-hope .l {
-    transition: text-shadow 1.4s ease;
-  }
-
-  .ink-slot .vw-hope .l.in {
-    animation: dawn 1.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .ink-slot .vw-hope.written .l {
-    text-shadow: 0 0 0.5em var(--color-accent-soft), 0 0 0.12em var(--color-accent-soft);
-  }
-
-  .ink-slot .vw-hope .l.in.go {
-    animation: float-up 1.1s cubic-bezier(0.5, 0, 0.75, 0) both;
-  }
-
-  @keyframes dawn {
-    0%   { opacity: 0; filter: blur(6px); transform: translateY(0.7em); color: var(--color-accent); }
-    55%  { opacity: 1; color: var(--color-accent); }
-    100% { opacity: 1; filter: blur(0); transform: none; }
-  }
-
-  @keyframes float-up {
-    to { opacity: 0; filter: blur(5px); transform: translateY(-0.9em); }
-  }
-
-  /* acceptance: every letter in a different hand, arriving scattered,
-     and settling into one line together. */
-  .ink-slot .vw-acceptance .f1 { font-style: italic; }
-  .ink-slot .vw-acceptance .f2 { font-family: var(--font-mono); font-size: 0.72em; }
-  .ink-slot .vw-acceptance .f3 { font-weight: var(--fw-bold); }
-  .ink-slot .vw-acceptance .f4 { font-family: 'Great Vibes', var(--font-display); font-size: 1.15em; color: var(--color-accent); }
-
-  .ink-slot .vw-acceptance .l {
-    transform: translateY(var(--y)) rotate(var(--r));
-    transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .ink-slot .vw-acceptance .l.in {
-    animation: ink-fade 0.9s ease both;
-  }
-
-  .ink-slot .vw-acceptance.written .l {
-    transform: none;
-  }
-
-  @keyframes ink-fade {
-    from { opacity: 0; filter: blur(4px); }
-    to   { opacity: 1; filter: blur(0); }
-  }
-
-  /* ── The name ──────────────────────────────────────────────
-     The sentence's last word is the site's name, so it is set in the
-     header's own hand at a larger size: "Journey of Curiosity", written by
-     the pen, Curiosity catching the light, a flourish drawn beneath, and
-     then it flies up and becomes the header's name. */
-  /* Two lines: "This is the" quiet above, the name large beneath it,
-     both on the centre line. */
-  .ink-name-line {
-    /* Out of the flow, so its size never pushes the other lines away
-       from the pot; it hangs from the top of the page area. */
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.15em;
-    white-space: nowrap;
-    visibility: hidden;
-  }
-
-  .ink-name-line.on {
-    visibility: visible;
-  }
-
-  .ink-pre {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-weight: var(--fw-light);
-    font-size: var(--fs-h2);
-    letter-spacing: var(--track-normal);
-    color: var(--color-text-secondary);
-    transition: opacity 1.1s ease, filter 1.1s ease, color 1.2s ease;
-  }
-
-  /* "This is the" is said only once the name is there. */
-  .ink-pre {
-    opacity: 0;
-    filter: blur(5px);
-  }
-
-  .ink-pre.shown {
-    opacity: 1;
-    filter: none;
-  }
-
-  .ink-pre.leave {
-    opacity: 0;
-    filter: blur(5px);
-  }
-
-  .ink-name {
-    position: relative;
-    font-family: 'Great Vibes', var(--font-serif);
-    font-style: normal;
-    font-weight: var(--fw-regular);
-    font-synthesis: none;
-    font-size: var(--fs-display-xl);
-    letter-spacing: var(--track-normal);
-    line-height: var(--lh-none);
-    color: var(--color-text);
-    --ink: var(--color-accent);
-    transition: color 0.7s ease;
-  }
-
-  .ink-name em {
-    font-style: normal;
-    color: var(--ink);
-    transition: color 0.7s ease;
-  }
-
-  /* The name is written in one stroke of the pen. The padding gives the script's
-     swashes room inside the mask; the margin takes it back. */
-  .ink-name .nm {
-    display: inline-block;
-    padding: 0.3em 0.35em 0.35em 0.25em;
-    margin: -0.3em -0.35em -0.35em -0.25em;
-    -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent 60%);
-    mask-image: linear-gradient(90deg, #000 40%, transparent 60%);
-    -webkit-mask-size: 260% 100%;
-    mask-size: 260% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 100% 0;
-    mask-position: 100% 0;
-  }
-
-  .ink-name .nm.writing {
-    animation: pen 3.5s cubic-bezier(0.4, 0.05, 0.3, 1) both;
-  }
-
-  .ink-name .nm.written {
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-
-  @keyframes pen {
-    from { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
-    to   { -webkit-mask-position: 0 0; mask-position: 0 0; }
-  }
-
-  /* The whole name draws a breath as it is finished. */
-  .ink-name.shine {
-    animation: breathe 1.9s cubic-bezier(0.34, 1.4, 0.5, 1) both;
-  }
-
-  @keyframes breathe {
-    0%   { transform: none; }
-    35%  { transform: scale(1.045); }
-    100% { transform: none; }
-  }
-
-  /* And a flourish is drawn beneath it, as under a signature. */
-  .ink-flourish {
-    position: absolute;
-    left: 6%;
-    width: 96%;
-    bottom: -0.2em;
-    height: 0.34em;
-    overflow: visible;
-    color: var(--ink);
-    clip-path: inset(-50% 102% -50% -2%);
+    color: var(--color-text-muted);
     transition: opacity var(--dur-slow) ease;
   }
+  .act-hint span { color: var(--color-accent); }
+  .act-hint.gone { opacity: 0; }
 
-  .ink-flourish path {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    vector-effect: non-scaling-stroke;
-  }
-
-  .ink-name.shine .ink-flourish {
-    clip-path: inset(-50% -2% -50% -2%);
-    transition: clip-path 1.4s cubic-bezier(0.65, 0, 0.35, 1) var(--dur-base), opacity var(--dur-slow) ease;
-  }
-
-  /* The header has no flourish, so it thins away over the flight. */
-  .ink-name.fly .ink-flourish {
-    opacity: 0;
-    transition: opacity 1s ease;
-  }
-
-  /* The ripples from the pot, beneath the words. */
-  .ink-ripples {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  .intro-skip {
-    z-index: 3;
-  }
-
-  /* Before the name, the line lets go. */
-  .ink-line .ink-lead .l.in.gone {
-    opacity: 0;
-    filter: blur(3px);
-    transition: opacity 1.1s ease, filter 1.1s ease;
-  }
-
-  .intro-mark.drink .vessel {
-    animation: drink 0.7s cubic-bezier(0.34, 1.6, 0.5, 1) both;
-  }
-
-  @keyframes drink {
-    0%   { transform: none; }
-    35%  { transform: scale(1.06, 0.94); }
-    100% { transform: none; }
-  }
-
-  /* On a phone it is two lines: the opening line quiet above, the word
-     large beneath it, both on the centre line. */
-  @media (max-width: 600px) {
-    .ink-line {
-      width: 100%;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.2em;
-    }
-
-    .ink-lead {
-      font-size: 5.6vw;
-    }
-
-    .ink-slot {
-      width: 100% !important;
-      margin-left: 0;
-      font-size: 11.5vw;
-    }
-
-    .ink-slot .vw {
-      left: 0;
-      right: 0;
-      text-align: center;
-    }
-
-    .ink-page {
-      width: 100%;
-      padding: 0 var(--space-4);
-      box-sizing: border-box;
-    }
-
-    .ink-name-line {
-      width: 100%;
-    }
-
-    .ink-pre {
-      font-size: 5.6vw;
-    }
-
-    .ink-name {
-      font-size: 11.5vw;
-    }
-  }
-
-  /* ── Skip, while the intro runs ────────────────────────── */
-  .intro-skip {
-    position: fixed;
-    right: var(--gutter);
-    bottom: max(var(--gutter), env(safe-area-inset-bottom));
-    pointer-events: auto;
-    display: inline-flex;
+  /* Where you are: one short mark per act, the current one drawn long in
+     the signal colour. Hidden while the name has the screen. */
+  .act-ticks {
+    position: absolute;
+    left: var(--axis);
+    bottom: calc(var(--space-xl) + var(--space-1));
+    display: flex;
     align-items: center;
     gap: var(--space-2);
-    min-height: 40px;
-    padding: 0 var(--space-4);
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    letter-spacing: var(--track-caps);
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    background: color-mix(in srgb, var(--color-bg) 80%, transparent);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    opacity: 0;
-    animation: skip-in 0.8s ease 1s forwards;
-    transition: color var(--dur-base) ease, border-color var(--dur-base) ease;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    transition: opacity var(--dur-slow) ease;
   }
+  .who.on ~ .act-ticks { opacity: 0; }
+  .act-ticks li {
+    width: var(--space-4);
+    height: 1px;
+    margin: 0;
+    background: var(--color-text-muted);
+    transition: width var(--dur-slow) var(--ease-out), background-color var(--dur-base) ease;
+  }
+  .act-ticks li.on { width: var(--space-10); background: var(--color-accent); }
 
-  .intro-skip span {
-    color: var(--color-accent);
-    transition: transform var(--dur-slow) var(--ease-out);
+  @media (prefers-reduced-motion: reduce) {
+    .act-text, .act.on .act-text, .who, .who.on { transition: none; }
   }
-
-  .intro-skip:hover {
-    color: var(--color-text);
-    border-color: var(--color-accent);
-  }
-
-  .intro-skip:hover span {
-    transform: translateX(3px);
-  }
-
-  @keyframes skip-in {
-    to { opacity: 1; }
-  }
-  @media (max-width: 1100px) {
-    .field-cap { display: none; }
+  @media (max-width: 760px) {
+    .act-text {
+      top: auto;
+      bottom: calc(var(--space-lg) + var(--space-6));
+      display: block;
+      width: auto;
+      right: var(--axis);
+    }
+    .act-say { font-size: var(--fs-act); }
+    .act-ticks { bottom: var(--space-lg); }
+    .act-hint { display: none; }
+    .who-print { width: 6rem; margin-bottom: var(--space-lg); }
+    .who { bottom: var(--space-xl); right: var(--axis); }
   }
 </style>
+
+<script is:inline>
+(function () {
+  var stage = document.getElementById('stage');
+  var canvas = document.getElementById('pts');
+  if (!stage || !canvas) return;
+  var g = canvas.getContext('2d');
+  var pin = canvas.parentElement;
+  var acts = [].slice.call(stage.querySelectorAll('.act'));
+  var ticks = [].slice.call(stage.querySelectorAll('.act-ticks li'));
+  var hint = stage.querySelector('.act-hint');
+  var who = document.getElementById('who');
+  var N = acts.length;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Colour, from the page's own tokens ── */
+  function rgb(c) {
+    c = c.trim();
+    if (c[0] === '#') {
+      if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+      return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+    }
+    var m = c.match(/[\d.]+/g) || [0, 0, 0];
+    return [+m[0], +m[1], +m[2]];
+  }
+  function mixc(a, b, t) { return [a[0] * t + b[0] * (1 - t), a[1] * t + b[1] * (1 - t), a[2] * t + b[2] * (1 - t)]; }
+  function css(c) { return 'rgb(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ')'; }
+  var pal;
+  function palette() {
+    var cs = getComputedStyle(document.documentElement);
+    var bg = rgb(cs.getPropertyValue('--color-bg')), ac = rgb(cs.getPropertyValue('--color-accent'));
+    var tx = rgb(cs.getPropertyValue('--color-text')), mu = rgb(cs.getPropertyValue('--color-text-muted'));
+    var cols = [];
+    for (var i = 0; i < 16; i++) {
+      var t = i / 15;
+      // Ink at one end of the manifold, through warm grey, to the signal.
+      var c = t < 0.55 ? mixc(mu, tx, t / 0.55 * 0.8 + 0.2) : mixc(ac, mu, (t - 0.55) / 0.45 * 0.85 + 0.15);
+      cols.push(css(c));
+    }
+    pal = { cols: cols, ink: css(mixc(tx, bg, 0.78)), accent: css(mixc(ac, bg, 0.92)), line: css(mixc(tx, bg, 0.16)), dust: css(mixc(mu, bg, 0.5)), edge: css(mixc(ac, bg, 0.35)) };
+  }
+
+  /* ── Nine drawings, one set of lines ──
+     The drawings are made of circles, straight lines and smooth curves at
+     one weight. Every drawing is the same fourteen continuous lines, all
+     of them always visible: between drawings nothing fades and nothing is
+     erased; each line moves and bends into its place in the next drawing,
+     going to the nearest line there, from its nearer end. One small circle
+     in the signal colour is the author, in every drawing. Units: about 2.6
+     across, 2 down. */
+  var SH = [], started = false, NP = 240, K = 28;
+  var regB = 0, colL = 0, colW = 0;
+  var W = 0, H = 0, dpr = 1;
+  var yaw = 0, tyaw = 0, pit = 0, tpit = 0, raf = 0, prog = 0, cur = 0, last = 0, born = performance.now();
+
+  // Lines as point lists.
+  function seg(x1, y1, x2, y2) { return [[x1, y1], [x2, y2]]; }
+  function arcP(x, y, r, a0, sweep) {
+    var n = Math.max(24, Math.ceil(Math.abs(sweep) * r * 160)), o = [];
+    for (var i = 0; i <= n; i++) { var a = a0 + sweep * i / n; o.push([x + Math.cos(a) * r, y + Math.sin(a) * r]); }
+    return o;
+  }
+  function ringP(x, y, r) { return arcP(x, y, r, -Math.PI / 2, Math.PI * 2); }
+  // A straight line with short ticks across it at the given distances,
+  // each tick drawn out and back, so the line stays one stroke.
+  function ticked(x1, y1, x2, y2, at, h) {
+    var L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L, nx = -uy * h, ny = ux * h, o = [[x1, y1]];
+    at.forEach(function (d) {
+      var px = x1 + ux * d, py = y1 + uy * d;
+      o.push([px, py], [px + nx, py + ny], [px - nx, py - ny], [px, py]);
+    });
+    o.push([x2, y2]);
+    return o;
+  }
+  function lenOf(p) { var s = 0; for (var i = 1; i < p.length; i++) s += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return s; }
+  // Split a line in two at half its length.
+  function halve(p) {
+    var half = lenOf(p) / 2, acc = 0;
+    for (var i = 1; i < p.length; i++) {
+      var d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+      if (acc + d >= half) {
+        var t = (half - acc) / (d || 1), m = [lerp(p[i - 1][0], p[i][0], t), lerp(p[i - 1][1], p[i][1], t)];
+        return [p.slice(0, i).concat([m]), [m].concat(p.slice(i))];
+      }
+      acc += d;
+    }
+    return [p, p];
+  }
+  // Evenly along the line, NP points.
+  function fit(p) {
+    var L = [0];
+    for (var i = 1; i < p.length; i++) L.push(L[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+    var tot = L[L.length - 1] || 1, out = [], j = 1;
+    for (var k = 0; k < NP; k++) {
+      var d = tot * k / (NP - 1);
+      while (j < p.length - 1 && L[j] < d) j++;
+      var t = (d - L[j - 1]) / ((L[j] - L[j - 1]) || 1);
+      out.push([lerp(p[j - 1][0], p[j][0], t), lerp(p[j - 1][1], p[j][1], t)]);
+    }
+    return out;
+  }
+  function centre(p) { var x = 0, y = 0; p.forEach(function (q) { x += q[0]; y += q[1]; }); return [x / p.length, y / p.length]; }
+  function closed(p) { return Math.hypot(p[0][0] - p[NP - 1][0], p[0][1] - p[NP - 1][1]) < 1e-3; }
+
+  // A drawing: its lines brought to exactly K by halving the longest, then
+  // each matched to the nearest line of the drawing before, from the
+  // nearer end, so the change between them is short and untangled.
+  function scene(me, lines, prev) {
+    lines = lines.slice();
+    while (lines.length < K) {
+      var li = 0;
+      lines.forEach(function (p, i) { if (lenOf(p) > lenOf(lines[li])) li = i; });
+      var h = halve(lines[li]); lines.splice(li, 1, h[0], h[1]);
+    }
+    var S = lines.map(fit);
+    if (!prev) return { me: me, s: S };
+    var pc = prev.s.map(centre), sc = S.map(centre), pairs = [];
+    pc.forEach(function (a, i) { sc.forEach(function (b, j) { pairs.push([Math.hypot(a[0] - b[0], a[1] - b[1]), i, j]); }); });
+    pairs.sort(function (m, n) { return m[0] - n[0]; });
+    var out = new Array(K), usedP = {}, usedS = {};
+    pairs.forEach(function (q) { if (!usedP[q[1]] && !usedS[q[2]]) { usedP[q[1]] = usedS[q[2]] = 1; out[q[1]] = S[q[2]]; } });
+    out = out.map(function (p, i) {
+      var a = prev.s[i];
+      if (closed(p)) {
+        // A closed line starts at its point nearest the old line's start.
+        var bi = 0, bd = 9;
+        for (var t = 0; t < NP - 1; t++) { var dd = Math.hypot(p[t][0] - a[0][0], p[t][1] - a[0][1]); if (dd < bd) { bd = dd; bi = t; } }
+        p = p.slice(bi, NP - 1).concat(p.slice(0, bi)); p.push(p[0]);
+        p = fit(p);
+      } else {
+        var keep = Math.hypot(p[0][0] - a[0][0], p[0][1] - a[0][1]) + Math.hypot(p[NP - 1][0] - a[NP - 1][0], p[NP - 1][1] - a[NP - 1][1]);
+        var flip = Math.hypot(p[NP - 1][0] - a[0][0], p[NP - 1][1] - a[0][1]) + Math.hypot(p[0][0] - a[NP - 1][0], p[0][1] - a[NP - 1][1]);
+        if (flip < keep) p = p.slice().reverse();
+      }
+      return p;
+    });
+    return { me: me, s: out };
+  }
+
+  var FOLK = [[0.72, -0.55, 0.22], [1.0, 0.1, 0.16], [0.62, 0.62, 0.25], [-0.15, 0.72, 0.14], [-0.82, 0.5, 0.2], [-0.95, -0.35, 0.17], [-0.3, -0.72, 0.21]];
+
+  function build() {
+    var i, k, P;
+    SH = [];
+    // 0. The author alone: a brain in profile, in smooth curves only: its
+    // outline, the central and lateral folds, the folds of each lobe, the
+    // cerebellum and its layers, the brainstem. The author's circle sits in
+    // the front of it, where thinking is done.
+    function smooth(pts, loop) {
+      var o = [], n = pts.length, segs = loop ? n : n - 1;
+      for (var a = 0; a < segs; a++) {
+        var p0 = pts[loop ? (a - 1 + n) % n : Math.max(0, a - 1)], p1 = pts[a], p2 = pts[(a + 1) % n], p3 = pts[loop ? (a + 2) % n : Math.min(n - 1, a + 2)];
+        for (var b = a ? 1 : 0; b <= 24; b++) {
+          var t = b / 24, t2 = t * t, t3 = t2 * t;
+          o.push([0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+                  0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)]);
+        }
+      }
+      return o;
+    }
+    var C = function (pts) { return smooth(pts, false); };
+    P = [
+      // The hemisphere's outline: frontal pole, the vault, the occipital
+      // pole, the temporal lobe beneath with its pole, the orbital surface.
+      smooth([[-1.12, -0.05], [-1.06, -0.38], [-0.84, -0.63], [-0.46, -0.79], [-0.02, -0.83], [0.42, -0.77], [0.78, -0.6], [1.02, -0.36],
+              [1.15, -0.08], [1.1, 0.12], [0.95, 0.2], [0.62, 0.22], [0.36, 0.32], [0.05, 0.42], [-0.28, 0.44], [-0.52, 0.37],
+              [-0.61, 0.23], [-0.56, 0.11], [-0.74, 0.12], [-0.99, 0.09]], true),
+      // The lateral (Sylvian) fissure and its two short branches.
+      C([[-0.56, 0.11], [-0.26, 0.01], [0.1, -0.09], [0.36, -0.18], [0.46, -0.31]]),
+      C([[-0.36, 0.04], [-0.42, -0.06], [-0.44, -0.12]]),
+      C([[-0.46, 0.07], [-0.56, 0.02], [-0.62, 0.0]]),
+      // The central sulcus, and the sulci either side of it.
+      C([[0.05, -0.83], [-0.03, -0.62], [0.06, -0.46], [-0.04, -0.31], [0.02, -0.14]]),
+      C([[-0.22, -0.79], [-0.29, -0.56], [-0.2, -0.43], [-0.27, -0.22]]),
+      C([[0.26, -0.77], [0.18, -0.56], [0.27, -0.41], [0.2, -0.24]]),
+      // Superior and inferior frontal sulci.
+      C([[-0.29, -0.58], [-0.5, -0.62], [-0.72, -0.53], [-0.92, -0.5]]),
+      C([[-0.27, -0.31], [-0.5, -0.3], [-0.73, -0.22], [-0.95, -0.23]]),
+      // The intraparietal sulcus.
+      C([[0.22, -0.42], [0.45, -0.43], [0.63, -0.35], [0.82, -0.39], [0.96, -0.23]]),
+      // Superior and inferior temporal sulci.
+      C([[-0.43, 0.23], [-0.1, 0.13], [0.25, 0.06], [0.55, -0.02], [0.74, -0.1]]),
+      C([[-0.31, 0.35], [0.0, 0.29], [0.3, 0.23], [0.56, 0.15]]),
+      // Parieto-occipital and occipital sulci.
+      C([[0.84, -0.56], [0.92, -0.41], [1.02, -0.43]]),
+      C([[0.97, -0.05], [0.86, 0.05], [0.99, 0.13]]),
+      // Shorter folds between.
+      C([[-0.62, -0.72], [-0.5, -0.67], [-0.4, -0.72]]),
+      C([[-0.88, -0.36], [-0.74, -0.4], [-0.62, -0.37]]),
+      C([[0.5, -0.66], [0.6, -0.58], [0.66, -0.64]]),
+      C([[0.4, -0.2], [0.5, -0.12], [0.56, -0.2]]),
+      C([[0.66, -0.2], [0.76, -0.1], [0.84, -0.16]]),
+      // The cerebellum, and its fine folia.
+      smooth([[0.55, 0.3], [0.85, 0.23], [1.08, 0.29], [1.13, 0.45], [0.96, 0.62], [0.68, 0.67], [0.5, 0.56], [0.48, 0.41]], true),
+      C([[0.6, 0.35], [0.85, 0.31], [1.05, 0.36]]),
+      C([[0.56, 0.43], [0.84, 0.4], [1.07, 0.44]]),
+      C([[0.56, 0.51], [0.82, 0.49], [1.02, 0.52]]),
+      C([[0.62, 0.59], [0.82, 0.58], [0.95, 0.59]]),
+      // The brainstem: the pons's curve in front, the line behind.
+      C([[0.28, 0.38], [0.19, 0.5], [0.22, 0.63], [0.3, 0.76], [0.32, 0.95]]),
+      C([[0.48, 0.49], [0.45, 0.66], [0.44, 0.95]])
+    ];
+    SH.push(scene([-0.66, -0.42], P));
+
+    // 1. One long curve that never settles.
+    var tang = [];
+    for (i = 0; i <= 2400; i++) {
+      var a = i / 2400 * Math.PI * 2 * 7;
+      tang.push([0.62 * Math.cos(a) + 0.42 * Math.cos(a * 2.71 + 0.4) + 0.14 * Math.cos(a * 5.3),
+                 0.5 * Math.sin(a) + 0.32 * Math.sin(a * 2.71 + 0.4) + 0.12 * Math.sin(a * 4.1)]);
+    }
+    SH.push(scene([0.08, 0.04], [tang], SH[0]));
+
+    // 2 and 3. The author's circle, the world's with its people, the line;
+    // then the compass construction that bridges it.
+    var inner = [[0.42, -0.22, 0.12], [0.8, -0.18, 0.1], [0.55, 0.25, 0.14], [0.86, 0.26, 0.08]].map(function (q) { return ringP(q[0], q[1], q[2]); });
+    var A = -0.55, B = 0, rr = 0.42, m = (A + B) / 2, hy = Math.sqrt(rr * rr - Math.pow((B - A) / 2, 2));
+    SH.push(scene([-0.85, 0], [ringP(-0.85, 0, 0.3), ringP(0.62, 0, 0.62)].concat(inner, [[[A, 0], [-0.18, 0], [-0.18, -0.05], [-0.18, 0.05]]]), SH[1]));
+    SH.push(scene([-0.85, 0], [ringP(-0.85, 0, 0.3), ringP(0.62, 0, 0.62)].concat(inner, [seg(A, 0, B, 0), seg(m, -hy - 0.12, m, hy + 0.12),
+      arcP(A, 0, rr, -1.25, 2.5), arcP(B, 0, rr, Math.PI - 1.25, 2.5)]), SH[2]));
+
+    // 4. Words, and a spiral of quarter circles.
+    P = [];
+    [[0.22, 0.12, 0.3, 0.16], [0.14, 0.28, 0.1, 0.2], [0.3, 0.12, 0.22], [0.18, 0.24]].forEach(function (row, ri) {
+      var x = -1.25, y = -0.45 + ri * 0.3;
+      row.forEach(function (w) { P.push(seg(x, y, x + w, y)); x += w + 0.07; });
+    });
+    var spiral = [], r = 0.62, ox = 0.62, oy = 0.05, ang = Math.PI;
+    for (k = 0; k < 7; k++) {
+      spiral = spiral.concat(arcP(ox, oy, r, ang, Math.PI / 2).slice(k ? 1 : 0));
+      var na = ang + Math.PI / 2, nr = r / 1.618;
+      ox += Math.cos(na) * (r - nr); oy += Math.sin(na) * (r - nr); ang = na; r = nr;
+    }
+    P.push(spiral);
+    SH.push(scene([ox, oy], P, SH[3]));
+
+    // 5. A horizon, rails and lines to one vanishing point, arches on the rails.
+    var vx = 0.2, vy = -0.2, xl = -1.2, xr = -0.62;
+    P = [seg(-1.3, vy, 1.3, vy), seg(vx, vy, xl, 1), seg(vx, vy, xr, 1)];
+    [0.1, 0.55, 0.95, 1.3].forEach(function (x) { P.push(seg(vx, vy, x, 1)); });
+    for (k = 0; k < 6; k++) {
+      var s = Math.pow(0.7, k), by = vy + (1 - vy) * s, al = vx + (xl - vx) * s, ar = vx + (xr - vx) * s, h2 = 0.72 * s;
+      P.push([[al, by]].concat(arcP((al + ar) / 2, by - h2, (ar - al) / 2, Math.PI, Math.PI), [[ar, by]]));
+    }
+    SH.push(scene([vx, vy], P, SH[4]));
+
+    // 6. People, each circle left unclosed.
+    SH.push(scene([0, 0], FOLK.map(function (q, j) { return arcP(q[0], q[1], q[2], j * 0.9, Math.PI * 2 * 0.72); }), SH[5]));
+
+    // 7. Ripples crowding to one side, hardly reaching the other.
+    P = [];
+    for (k = 1; k <= 13; k++) P.push(arcP(0.32, 0, 0.075 * k, Math.PI / 2 + 0.12, Math.PI - 0.24));
+    P.push(arcP(0.32, 0, 0.13, -Math.PI / 2 + 0.55, Math.PI - 1.1));
+    SH.push(scene([0.32, 0], P, SH[6]));
+
+    // 8. The people closed, each joined to the author by a measured line.
+    P = FOLK.map(function (q) { return ringP(q[0], q[1], q[2]); });
+    FOLK.forEach(function (q) {
+      var L = Math.hypot(q[0], q[1]), ux = q[0] / L, uy = q[1] / L, a0 = 0.09, a1 = L - q[2] - 0.03, at = [];
+      for (var t = a0 + 0.12; t < a1 - 0.04; t += 0.12) at.push(t - a0);
+      P.push(ticked(ux * a0, uy * a0, ux * a1, uy * a1, at, 0.025));
+    });
+    SH.push(scene([0, 0], P, SH[7]));
+  }
+
+  function size() {
+    W = pin.clientWidth; H = pin.clientHeight;
+    if (!W || !H) return;
+    dpr = Math.min(2, devicePixelRatio || 1);
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    // The picture's column: from the sentence's right edge to the frame's
+    // right edge (the axis), so on a very wide screen it stays inside the
+    // page's frame instead of drifting to the window's far side.
+    var tx = acts.length ? acts[0].firstElementChild : null;
+    if (tx && W >= 761) {
+      var L = tx.offsetLeft, R = L + tx.offsetWidth;
+      colL = R + Math.max(24, W * 0.02); colW = Math.max(200, (W - L) - colL);
+    } else { colL = 0; colW = W; }
+    build();
+    kick();
+  }
+
+  function ease(t) { t = Math.max(0, Math.min(1, t)); return t * t * t * (t * (t * 6 - 15) + 10); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  var F;
+  function frame() {
+    var narrow = W < 761, s = cur * N;
+    var open = ease(s / 0.35);
+    var intro = reduce ? 1 : ease((performance.now() - born) / 1800);
+    // On a phone the drawing takes all the height the sentence leaves, and
+    // follows it smoothly as sentences of different lengths come and go.
+    var rt = 0, rh = H, settling = false;
+    if (narrow) {
+      var ai = s < 0.45 ? -1 : Math.min(N - 1, Math.floor(s + 0.55) - 1);
+      var el = ai < 0 ? who : acts[ai].firstElementChild;
+      var target = (el ? el.offsetTop : H * 0.55) - (ai < 0 ? 4 : 18);
+      if (!regB) regB = target;
+      regB += (target - regB) * 0.16;
+      settling = Math.abs(target - regB) > 0.5;
+      rt = 10; rh = Math.max(120, regB - rt);
+    }
+    var S0 = narrow ? Math.min(W * 0.9 / 2.7, rh * 0.86 / 2.1) : Math.min(colW * 0.86 / 2.7, H * 0.68 / 2.1);
+    // The change under way, from scene k - 1 to scene k, in the middle of
+    // the scroll between their sentences. The sentence changes halfway.
+    var k = Math.max(0, Math.min(N, Math.floor(s + 0.85)));
+    var w = k === 0 ? 1 : (s - (k - 0.85)) / 0.6;
+    F = {
+      narrow: narrow, intro: intro, settling: settling, k: k, w: Math.max(0, Math.min(1, w)), S: S0,
+      cx: narrow ? W * 0.5 : colL + colW * lerp(0.62, 0.5, open), cy: narrow ? rt + rh / 2 : H * 0.5
+    };
+  }
+
+  function draw(now) {
+    raf = 0;
+    // A mouse wheel moves the page in jumps of a hundred pixels or so; the
+    // drawing glides after the scroll instead of jumping with it, at the
+    // same pace whatever the screen's refresh rate.
+    var dt = last ? Math.min(64, (now || performance.now()) - last) : 16;
+    last = now || performance.now();
+    cur = reduce ? prog : cur + (prog - cur) * (1 - Math.exp(-dt / 110));
+    if (Math.abs(prog - cur) < 0.0004) cur = prog;
+    frame();
+    var k = F.k, w = F.w, narrow = F.narrow, S = F.S, cx = F.cx, cy = F.cy;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+
+    var A = SH[k > 0 ? k - 1 : 0], B = SH[k], mix = k > 0 && w < 1;
+    // Every line, always drawn in full; between drawings each moves into
+    // its next place, from one end to the other, a moment behind itself.
+    var path = new Path2D();
+    for (var j = 0; j < K; j++) {
+      var a = A.s[j], b = B.s[j];
+      for (var i = 0; i < NP; i++) {
+        var x, y;
+        if (mix) {
+          var ww = ease(w * 1.3 - (i / NP) * 0.3);
+          x = lerp(a[i][0], b[i][0], ww); y = lerp(a[i][1], b[i][1], ww);
+        } else { x = b[i][0]; y = b[i][1]; }
+        x = cx + x * S; y = cy + y * S;
+        if (i === 0) path.moveTo(x, y); else path.lineTo(x, y);
+      }
+    }
+    g.lineWidth = narrow ? 1 : 1.1;
+    g.strokeStyle = pal.ink; g.globalAlpha = F.intro;
+    g.stroke(path);
+
+    // The author: one small circle in the signal colour, always there,
+    // moving with the scene.
+    var mt = mix ? ease(w) : 1, ma = A.me, mb = B.me;
+    var mx = cx + lerp(ma[0], mb[0], mt) * S, my = cy + lerp(ma[1], mb[1], mt) * S;
+    g.globalAlpha = F.intro;
+    g.strokeStyle = pal.accent; g.fillStyle = pal.accent; g.lineWidth = narrow ? 1 : 1.1;
+    g.beginPath(); g.arc(mx, my, 0.06 * S, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.arc(mx, my, narrow ? 2 : 2.4, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = 1;
+
+    // The sentence changes halfway through its scene's change.
+    var s3 = cur * N, act = s3 < 0.45 ? -1 : Math.min(N - 1, Math.floor(s3 + 0.55) - 1);
+    acts.forEach(function (el, i) { el.classList.toggle('on', i === act); });
+    ticks.forEach(function (el, i) { el.classList.toggle('on', i === act); });
+    if (who) who.classList.toggle('on', act < 0);
+    if (hint) hint.classList.toggle('gone', prog > 0.02);
+
+    var busy = F.intro < 1 || F.settling || cur !== prog;
+    if (busy) kick(); else last = 0;
+  }
+
+  function kick() { if (!raf && SH.length) { raf = requestAnimationFrame(draw); } }
+
+  function onScroll() {
+    // Measured from where the picture pins (under the header), so the last
+    // step lands exactly as the picture lets go, not after it has moved.
+    var b = stage.getBoundingClientRect(), stick = parseFloat(getComputedStyle(pin).top) || 0;
+    var total = stage.offsetHeight - pin.offsetHeight;
+    prog = Math.max(0, Math.min(1, (stick - b.top) / (total || 1)));
+    if (!started) { cur = prog; started = true; }
+    kick();
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch') return;
+    tyaw = (e.clientX / innerWidth - 0.5) * 1.1;
+    tpit = (e.clientY / innerHeight - 0.5) * 0.5;
+    kick();
+  }, { passive: true });
+  new ResizeObserver(function () { size(); onScroll(); }).observe(pin);
+  new MutationObserver(function () { palette(); kick(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  palette(); size(); onScroll();
+})();
+</script>
