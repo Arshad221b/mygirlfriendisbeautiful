@@ -12,14 +12,15 @@ import Layout from '../layouts/Layout.astro';
 
 // One sentence to a screen; the picture takes one step with each.
 const acts = [
-  { say: "For a long time I felt I was too complicated to explain, and it caused me a great deal of trouble." },
-  { say: "In truth, what I lacked was the ability to communicate, and an understanding of the world and the people in it." },
-  { say: "This site is my attempt to work on both, starting with the way my mind already works." },
-  { say: "It thinks far better in images than in words." },
+  { say: "For a long time I felt I was too complicated to explain, and the world too complicated to understand, and it cost me a great deal." },
+  { say: "In truth, the complexity was never the problem; what I lacked was a way to communicate, and a way to understand." },
+  { say: "This site is my attempt to build both, starting with the way my mind already works." },
+  { say: "It thinks in images far more readily than in words." },
   { say: "That is why fields built on seeing, such as computer vision (where I earn my living), architecture, visual art and fine cinematography, have always drawn me in." },
-  { say: "People are harder to picture: I struggle to understand emotions, and even more to manage them." },
-  { say: "Either I become overly sensitive about something, or I fail to register my own feelings and those of the people around me." },
-  { say: "So I study them the way I study everything else, through psychology, neuroscience and analytical thinking, until I can understand them in a language I understand." },
+  { say: "But not everything shows itself to the eye: a building or a frame I can picture, but people are harder, because I struggle to understand emotions, and even more to manage them." },
+  { say: "In practice it swings between extremes: either I feel something far too strongly, or I fail to register my own feelings and those of the people around me." },
+  { say: "So I try to understand them the way I understand anything else: I read psychology and neuroscience, think it through, and slowly they become a little easier to see." },
+  { say: "I may never fully explain myself or understand the people and the world around me, but this site is where I keep trying, and that is my <span class=\"act-brand\">Journey of <em>Curiosity</em></span>" },
 ];
 const links = [
   { label: 'GitHub', href: 'https://github.com/Arshad221b' },
@@ -66,7 +67,7 @@ const title = 'Arshad Kazi';
         {acts.map((a, i) => (
           <div class="act" data-i={i}>
             <div class="act-text">
-              <p class="act-say">{a.say}</p>
+              <p class="act-say" set:html={a.say} />
             </div>
           </div>
         ))}
@@ -91,7 +92,7 @@ const title = 'Arshad Kazi';
 
   /* About a third of a screen of scroll per sentence; one screen of
      picture, pinned. */
-  .stage { position: relative; height: 380vh; height: 380svh; }
+  .stage { position: relative; height: 420vh; height: 420svh; }
   .pin {
     position: sticky;
     top: var(--head-h, 4.5rem);
@@ -217,6 +218,22 @@ const title = 'Arshad Kazi';
     transition: opacity 0.7s var(--ease-out) var(--dur-base), transform 0.7s var(--ease-out) var(--dur-base);
   }
 
+  /* The site's name, said in the last sentence, set as the title is. */
+  .act-say :global(.act-brand) {
+    font-family: 'Great Vibes', var(--font-serif);
+    font-style: normal;
+    font-weight: var(--fw-regular);
+    font-synthesis: none;
+    /* Its own line, larger than the sentence: the story signs off with
+       the site's name. */
+    display: block;
+    margin-top: 0.3em;
+    font-size: 1.75em;
+    letter-spacing: var(--track-normal);
+    line-height: var(--lh-tight);
+    white-space: nowrap;
+  }
+  .act-say :global(.act-brand em) { font-style: normal; color: var(--color-accent); }
   .act-say {
     margin: 0;
     font-family: var(--font-display);
@@ -327,7 +344,7 @@ const title = 'Arshad Kazi';
       var c = t < 0.55 ? mixc(mu, tx, t / 0.55 * 0.8 + 0.2) : mixc(ac, mu, (t - 0.55) / 0.45 * 0.85 + 0.15);
       cols.push(css(c));
     }
-    pal = { cols: cols, ink: css(mixc(tx, bg, 0.78)), accent: css(mixc(ac, bg, 0.92)), line: css(mixc(tx, bg, 0.16)), dust: css(mixc(mu, bg, 0.5)), edge: css(mixc(ac, bg, 0.35)) };
+    pal = { bg: css(bg), cols: cols, ink: css(mixc(tx, bg, 0.78)), accent: css(mixc(ac, bg, 0.92)), line: css(mixc(tx, bg, 0.16)), dust: css(mixc(mu, bg, 0.5)), edge: css(mixc(ac, bg, 0.35)) };
   }
 
   /* ── Nine drawings, one set of lines ──
@@ -551,6 +568,20 @@ const title = 'Arshad Kazi';
       P.push(ticked(ux * a0, uy * a0, ux * a1, uy * a1, at, 0.025));
     });
     SH.push(scene([0, 0], P, SH[7]));
+
+    // 9. A journey of curiosity: a path spiralling out, evenly, from the
+    // lamp at its centre, past the people met along it, left open; the
+    // author at its open end, still going.
+    var turns = 3.25, gap = 0.27, r0 = 0.3, phi0 = -Math.PI / 4, sq = 0.85, sp = [];
+    var at = function (t) { var th = t * turns * Math.PI * 2, r = r0 + gap * th / (Math.PI * 2); return [Math.cos(th + phi0) * r, Math.sin(th + phi0) * r * sq, th, r]; };
+    for (var u = 0; u <= 1.0001; u += 1 / 900) sp.push(at(u).slice(0, 2));
+    var end = sp[sp.length - 1];
+    P = [sp];
+    [0.3, 0.42, 0.53, 0.63, 0.72, 0.8, 0.88].forEach(function (u, j) {
+      var q = at(u), r9 = 0.065 + 0.008 * j, nx = Math.cos(q[2] + phi0), ny = Math.sin(q[2] + phi0) * sq, nl = Math.hypot(nx, ny);
+      P.push(ringP(q[0] + nx / nl * (r9 + 0.025), q[1] + ny / nl * (r9 + 0.025), r9));
+    });
+    SH.push(scene(end, P, SH[8]));
   }
 
   function size() {
@@ -573,6 +604,18 @@ const title = 'Arshad Kazi';
   function ease(t) { t = Math.max(0, Math.min(1, t)); return t * t * t * (t * (t * 6 - 15) + 10); }
   function lerp(a, b, t) { return a + (b - a) * t; }
 
+  // The site's lamp, from its own mark in the header.
+  var LAMP = (function () {
+    var dots = new Path2D();
+    [38, 42.8, 47.6, 52.4, 57.2, 62].forEach(function (x) { dots.moveTo(x + 1.5, 88); dots.ellipse(x, 88, 1.5, 2.4, 0, 0, Math.PI * 2); });
+    return {
+      ink: new Path2D('M50 52 C46 40 60 36 56 26 C52 16 40 20 44 30 C47 37 58 32 60 22 C62 12 54 6 48 8'),
+      pot: new Path2D('M39.2 94 C29.6 94 28.4 79.6 36.8 72.4 C40.4 69.4 41.6 67.6 41.6 64 L58.4 64 C58.4 67.6 59.6 69.4 63.2 72.4 C71.6 79.6 70.4 94 60.8 94 Z'),
+      lid: new Path2D('M42.8 64 L42.8 59.2 L57.2 59.2 L57.2 64 Z'),
+      band: new Path2D('M33.2 82 C40.4 78.4 59.6 78.4 66.8 82'),
+      dots: dots
+    };
+  })();
   var F;
   function frame() {
     var narrow = W < 761, s = cur * N;
@@ -640,10 +683,25 @@ const title = 'Arshad Kazi';
     // moving with the scene.
     var mt = mix ? ease(w) : 1, ma = A.me, mb = B.me;
     var mx = cx + lerp(ma[0], mb[0], mt) * S, my = cy + lerp(ma[1], mb[1], mt) * S;
+    // In the last drawing the site's lamp stands at the spiral's centre,
+    // where the journey starts; the author stays at its open end.
+    var lamp = k === SH.length - 1 ? (mix ? ease(w) : 1) : 0;
     g.globalAlpha = F.intro;
     g.strokeStyle = pal.accent; g.fillStyle = pal.accent; g.lineWidth = narrow ? 1 : 1.1;
     g.beginPath(); g.arc(mx, my, 0.06 * S, 0, Math.PI * 2); g.stroke();
     g.beginPath(); g.arc(mx, my, narrow ? 2 : 2.4, 0, Math.PI * 2); g.fill();
+    if (lamp > 0.01) {
+      var sc = 0.4 * S / 96, lx = cx, ly = cy + 0.14 * S;
+      g.globalAlpha = lamp;
+      g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (lx - 50 * sc), dpr * (ly - 94 * sc));
+      g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = pal.accent;
+      g.lineWidth = 3.4; g.stroke(LAMP.ink);
+      g.fillStyle = pal.bg; g.fill(LAMP.pot); g.lineWidth = 3; g.stroke(LAMP.pot);
+      g.fillStyle = pal.accent; g.lineWidth = 1.5; g.fill(LAMP.lid); g.stroke(LAMP.lid);
+      g.lineWidth = 1.6; g.stroke(LAMP.band);
+      g.fill(LAMP.dots);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
     g.globalAlpha = 1;
 
     // The sentence changes halfway through its scene's change.

@@ -292,13 +292,13 @@ Each appears once per place, always in the mast's hairline (`--fw-display`,
 ### About: nine drawings, one cast
 
 The About page opens on the author's photograph, name and line beside a
-brain in lateral view, drawn as an anatomical plate in smooth curves. Then one sentence to a screen (eight, in the author's
+brain in lateral view, drawn as an anatomical plate in smooth curves. Then one sentence to a screen (nine, in the author's
 words), each with its drawing: a long curve that never settles; the
 author's circle with a line stopping short of the world's circle and its
 people; the compass construction that bridges it; words and a spiral of
 quarter circles; arches on rails to a vanishing point; people as unclosed
 circles; ripples crowding to one side; the people closed and joined to the
-author by measured lines. Only circles, straight lines and smooth curves,
+author by measured lines; and last, a path spiralling outward past the people met along it, left open, the author at its open end (a journey of curiosity). Only circles, straight lines and smooth curves,
 at one hairline weight in a soft ink; the author is one small circle in
 the signal colour, in every drawing.
 
