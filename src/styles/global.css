@@ -28,7 +28,7 @@
      bar (theme-color) and the overscroll area use this, so the top of a
      phone screen runs into the page without a seam. Re-measure it if the
      paper or the grain changes. */
-  --color-chrome: #f0e9de;
+  --color-chrome: #f4eee3;
   --color-text: #151412;
   --color-text-secondary: #46433e;
   --color-text-muted: #85817a;
