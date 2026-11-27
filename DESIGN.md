@@ -231,6 +231,11 @@ screen; no frame loop runs forever.
 ## 13. Components
 
 - **Site bar** — sticky, `--z-header`, frosts when scrolled.
+- **Reading toggle** — beside night mode, an "Aa" button sets the body of every
+  article (posts, essays, notebook days) in OpenDyslexic: its text, headings,
+  sub-headings and callouts. The page's title, navigation, mono labels and
+  anything outside the article keep their faces. Remembered on the device;
+  the font loads only when on.
 - **Mast** (Home, Blogs, Thoughts, Contact) — one title, `.mast-title`:
   `--fs-display-xl`, `--fw-display`, `--lh-mast`, `--track-mast`, on the
   axis, its last word in the italic accent ("Arshad *Kazi*", "Technical

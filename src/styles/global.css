@@ -558,6 +558,77 @@ li {
   color: var(--color-accent);
 }
 
+/* ── Dyslexia-friendly reading text ─────────────────────
+   A reader's choice in the header. Only plain reading text changes:
+   the rule has no specificity, so anything with a font of its own
+   (titles, headings, labels, navigation, the About sentences) keeps it.
+   The font loads only when someone turns it on. */
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.3.0/files/opendyslexic-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.3.0/files/opendyslexic-latin-400-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic@5.3.0/files/opendyslexic-latin-700-normal.woff2') format('woff2');
+}
+/* Inside an article's body (a post, an essay, a notebook day) the serif
+   and the display face both become OpenDyslexic, so the reading text and
+   its headings, sub-headings and callouts all follow, however their own
+   rules style them. The page's title, the navigation, the mono labels and
+   everything outside the article keep their faces. */
+html.dyslexic :is(.blog-post-content, .experiment-page) {
+  --font-serif: 'OpenDyslexic', 'Newsreader', Georgia, serif;
+  --font-display: 'OpenDyslexic', 'Newsreader', Georgia, serif;
+}
+:where(html.dyslexic) :where(.blog-post-content, .experiment-page) :where(p, li, dd, td, blockquote) {
+  font-family: 'OpenDyslexic', var(--font-serif);
+  font-size: 0.9em;
+  line-height: var(--lh-body);
+  word-spacing: 0.08em;
+}
+/* The day's own title keeps the display face. */
+html.dyslexic .experiment-page h1 { --font-display: 'Newsreader', Georgia, serif; --font-serif: 'Newsreader', Georgia, serif; }
+:where(html.dyslexic) :where(.blog-post-content, .experiment-page) :where(h2, h3, h4) {
+  font-family: 'OpenDyslexic', var(--font-serif);
+  letter-spacing: var(--track-normal);
+}
+.theme-toggle { flex-shrink: 0; }
+.read-toggle { margin-right: var(--space-1); }
+/* The reading toggle is quieter than night mode: no ring, a small muted
+   mark; when on, the same small dot that marks the current page. */
+.theme-toggle.read-toggle {
+  position: relative;
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+.theme-toggle.read-toggle svg { width: 13px; height: 13px; }
+.theme-toggle.read-toggle:hover { border-color: transparent; color: var(--color-text); }
+.theme-toggle.read-toggle[aria-pressed='true'] { color: var(--color-text); }
+.read-toggle[aria-pressed='true']::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-0-5);
+  width: 4px;
+  height: 4px;
+  margin-left: calc(-1 * var(--space-0-5));
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
 /* ── Site header ─────────────────────────────────────── */
 body > header {
   position: sticky;
@@ -845,7 +916,7 @@ html.dark .theme-toggle .icon-moon { display: none; }
 @media (max-width: 480px) {
   .nav-links { gap: 0; }
   .nav-link {
-    padding: 0 var(--space-1-5);
+    padding: 0 var(--space-1);
     letter-spacing: var(--track-normal);
   }
   .nav-separator { margin: 0 var(--space-1); }

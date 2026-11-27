@@ -81,6 +81,8 @@ const elsewhere = [
         if (theme === 'dark') {
           document.documentElement.classList.add('dark');
         }
+        // Dyslexia-friendly reading text, if the reader chose it.
+        try { if (localStorage.getItem('read') === 'dyslexic') document.documentElement.classList.add('dyslexic'); } catch (e) {}
         // The phone browser's bar takes this colour; it has to match the
         // paper, and the paper depends on the theme.
         const bar = document.querySelector('meta[name="theme-color"]');
@@ -163,6 +165,9 @@ const elsewhere = [
               </a>
             ))}
             <span class="nav-separator"></span>
+            <button class="theme-toggle read-toggle" id="read-toggle" title="Dyslexia-friendly text" aria-label="Dyslexia-friendly text" aria-pressed="false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19 8 5l5 14"/><path d="M5 14h6"/><circle cx="17.5" cy="15.5" r="3.5"/><path d="M21 12v7"/></svg>
+            </button>
             <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
               <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -536,6 +541,18 @@ const elsewhere = [
         });
       }, { passive: true });
     }
+  })();
+
+  // Dyslexia-friendly reading text: on or off, remembered on this device.
+  (function () {
+    var b = document.getElementById('read-toggle'), html = document.documentElement;
+    if (!b) return;
+    b.setAttribute('aria-pressed', html.classList.contains('dyslexic') ? 'true' : 'false');
+    b.addEventListener('click', function () {
+      var on = html.classList.toggle('dyslexic');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      try { if (on) localStorage.setItem('read', 'dyslexic'); else localStorage.removeItem('read'); } catch (e) {}
+    });
   })();
 
   document.getElementById('theme-toggle').addEventListener('click', function (event) {

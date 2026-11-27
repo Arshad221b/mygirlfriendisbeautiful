@@ -31,7 +31,8 @@ for (const f of files) {
   let src = readFileSync(f, 'utf8');
   const blocks = f.endsWith('.css') ? [src] : [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]);
   for (const css of blocks) {
-    const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    // @font-face describes a font file, not the page: its weights are the file's.
+    const text = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@font-face\s*\{[^}]*\}/g, '');
     for (const m of text.matchAll(/(?<![\w-])([a-z-]+)\s*:\s*([^;{}]+);/g)) {
       const prop = m[1], raw = m[2].replace(/\s*!important$/, '').trim();
       // A token, or a token's fallback, is fine: read past every var(...).
