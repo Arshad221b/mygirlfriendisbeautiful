@@ -373,6 +373,15 @@ const elsewhere = [
       <p class="foot-sign" aria-hidden="true"><span>Arshad</span> <em>Kazi</em></p>
     </footer>
     <script is:inline>
+      // The contents (and the phone's contents chip) step aside once the
+      // footer comes into view, so they never print over it.
+      (function () {
+        var toc = document.getElementById('margin-toc'), foot = document.querySelector('body > footer');
+        if (!toc || !foot || !window.IntersectionObserver) return;
+        new IntersectionObserver(function (e) { toc.classList.toggle('past-end', e[0].isIntersecting); }, { rootMargin: '0px 0px -12% 0px' }).observe(foot);
+      })();
+    </script>
+    <script is:inline>
       // A long equation or a wide diagram is scaled to fit its column, so
       // nothing ever needs scrolling sideways. Equations are typeset by a
       // script after the page loads, so each is fitted as it appears, and
